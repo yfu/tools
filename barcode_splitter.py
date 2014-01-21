@@ -32,18 +32,24 @@ def main():
     
     parser.add_option("-p", "--prefix", action="store", type="string",
                       dest="fn_prefix", help="Optional filename prefix")
+    parser.add_option("-v", "--verbose", action="store_true",
+                      dest="verbose", help="Optional filename prefix")
     
     # parser.add_option("-n", "--name", action="store", type="string",
     #                   dest="name", help="The string that is added for each new fastq files")
-
     (options, args) = parser.parse_args()
+    if options.fastq_fn == None:
+        parser.print_help()
+        sys.exit(1)
+
     fastq_fn = options.fastq_fn
     barcode_fn = options.barcode_fn
     mismatches = options.mismatches
     fn_prefix = options.fn_prefix
     if fn_prefix == None:
         fn_prefix = ""
-    print "*%s*" % (fn_prefix)
+    # print "*%s*" % (fn_prefix)
+    verbose = options.verbose
     # name = options.name
     
     barcodes_names = {} # Seq as the key, name as the value
@@ -75,23 +81,23 @@ def main():
             p1, p2 = line1.split()
             seq_barcode = p2.split(":")[-1]
 
-            print "The barcode from the current sequence is " + seq_barcode
+            # print "The barcode from the current sequence is " + seq_barcode
             dist = 0
             matched = False
             for i in barcodes_names.keys():
                 dist = calc_str_dist(i, seq_barcode)
                 # print "Distance: " + str(dist) + "between " + i + "and " + seq_barcode
-                print "Trying to match: " + i
+                # print "Trying to match: " + i
                 if dist <= mismatches:
                     print >> barcodes_fh[i], line1, rest_of_line,
-                    print "Successful match"
+                    # print "Successful match"
                     matched = True
                     # if the barcode from one seq already matches,
                     # we don't need to try to match it with other barcodes
                     break;
             if matched == False:
                 print >> barcodes_fh["unmatched"], line1, rest_of_line,
-            print "-" * 72
+            # print "-" * 72
     for k in barcodes_fh.keys():
         barcodes_fh[k].close()
                                 
