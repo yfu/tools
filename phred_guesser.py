@@ -30,7 +30,7 @@ def main():
             if g_max < l_max:
                 g_max = l_max
             counter = 0
-    print "The range of the quality scores is: [%d, %d]" % (g_min, g_max)
+    # print "The range of the quality scores is: [%d, %d]" % (g_min, g_max)
     print report(g_min, g_max)
 
 def report(g_min, g_max):
@@ -44,19 +44,22 @@ def report(g_min, g_max):
     }
     phred33_flag = False
     phred64_flag = False
-    for k in ranges.keys():
-        if g_min >= ranges[k][0] and g_max <= ranges[k][1]:
-            phred33_flag = True
-        if g_min >= ranges[k][0] and g_max <= ranges[k][1]:
-            phred64_flag = True
+    g_min = 35; g_max = 74;
+
+    if g_min >= ranges["phred33"][0] and g_max <= ranges["phred33"][1]:
+        phred33_flag = True
+        
+    if g_min >= ranges["phred64"][0] and g_max <= ranges["phred64"][1]:
+        phred64_flag = True
+
     if phred33_flag and phred64_flag:
-        print "Ambiguous"
+        return "Ambiguous"
     elif phred33_flag and not phred64_flag:
-        print "phred33"
+        return "phred33"
     elif phred64_flag and not phred33_flag:
-        print "phred64"
+        return "phred64"
     else:
-        print "Something is wrong?"
+        return "Something is wrong?"
     
 if __name__ == "__main__":
     main()
