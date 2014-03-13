@@ -2,7 +2,7 @@
 
 # Usage: rnaseq.sh -l 10131619.r1_id1.fq -r 10131619.r2_id1.fq 
 
-cpu=5
+cpu=4
 
 while getopts "hfl:r:o:s:c:FR" OPTION
 do
@@ -16,12 +16,12 @@ do
           o)
                out_dir=$OPTARG
           ;;
-          F)
-               STRAND=$((STRAND+2))
-          ;;
-          R)
-               STRAND=$((STRAND+1))
-          ;;
+          # F)
+          #      strand=$((STRAND+2))
+          # ;;
+          # R)
+          #      strand=$((STRAND+1))
+          # ;;
      esac
 done
 
@@ -30,7 +30,7 @@ step=1
 common="$HOME/data/PE_Pipeline/common_files/dm3"
 phred_option="--phred33"
 out_dir=$(pwd)
-
+strand=1
 
 read_length=`head -2 $left | awk '{getline; printf "%d", length($1)}'`
 # overhang
@@ -127,10 +127,12 @@ samtools sort -@ $cpu ${out_dir2}/x_rRNA.Aligned.out.bam ${out_dir2}/x_rRNA.sort
     touch ${out_dir}/.${step}.genome_bam_processing
 step=$((step+1))
 
-# Prepare for cufflinks
+echo "########################################################################"
 
-declare -a cufflinks_g=("flyBase" "iGenome")
-iGenome=/data/fuy2/PE_Pipeline/common_files/dm3/genes.gtf
+# Prepare for cufflinks
+declare -a cufflinks_g=("iGenome")
+# declare -a cufflinks_g=("flyBase" "iGenome")
+iGenome=/data/fuy2/shared/iGenome.gtf
 # /home/hanb/nearline/Drosophila_melanogaster/UCSC/dm3/Annotation/Genes/genes.gtf
 flyBase=/data/fuy2/PE_Pipeline/common_files/dm3/dmel-all-no-analysis-r5.54.gene+CDS.gtf
 # /home/hanb/nearline/PE_Pipeline/common_files/dm3/dmel-all-no-analysis-r5.54.gene+CDS.gtf
@@ -141,7 +143,7 @@ genome_fa=/data/fuy2/shared/dm3.fa
 for t in "${cufflinks_g[@]}"; do \
      out_dir_sub=${out_dir}/cufflinks_${t}_compatible_hits_norm && mkdir -p $out_dir_sub
      [ ! -f ${out_dir}/.${step}.quantification_by_cuff_${t}_compatible_hits_norm ] && \
-          cufflinks \
+          cufflinks -v \
           -o $out_dir_sub \
           -p $cpu \
           -G ${!t} \
@@ -154,11 +156,11 @@ for t in "${cufflinks_g[@]}"; do \
           2> $out_dir_sub/cufflinks.log && \
           touch ${out_dir}/.${step}.quantification_by_cuff_${t}_compatible_hits_norm
      step=$((step+1))
-    
+
      out_dir_sub=${out_dir}/cufflinks_${t}_total_hits_norm
      mkdir -p $out_dir_sub
      [ ! -f ${out_dir}/.${step}.quantification_by_cuff_${t}_total_hits_norm ] && \
-          cufflinks \
+          cufflinks -v \
           -o $out_dir_sub \
           -p $cpu \
           -G ${!t} \
@@ -170,4 +172,23 @@ for t in "${cufflinks_g[@]}"; do \
           ${out_dir2}/x_rRNA.sorted.bam \
           2> $out_dir_sub/cufflinks.log && \
           touch ${out_dir}/.${step}.quantification_by_cuff_${t}_total_hits_norm
+     step=$((step+1))
 done
+
+echo "########################################################################"
+
+
+#use htseq-count
+out_dir3=${out_dir}/htseqCount
+mkdir -p ${out_dir3}
+[ -f ${out_dir}/.${step}.overlap_by_htseq-count ] && echo "htseq-count is done already. I will skip this step."
+[ ! -f ${out_dir}/.${step}.overlap_by_htseq-count ] && \
+htseqCountPE.sh \
+     ${out_dir2}/x_rRNA.Aligned.out.sam \
+     $strand \
+     fly \
+     $out_dir3 \
+     $cpu && \
+     touch ${out_dir}/.${step}.overlap_by_htseq-count
+step=$((step+1))
+echo "########################################################################"
