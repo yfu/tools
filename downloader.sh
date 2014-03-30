@@ -2,7 +2,6 @@
 
 # Download all papers of the Nature Review Genetics
 root="http://www.nature.com"
-echo "" > tmp/papers.list
 all_cate=$(curl -s "http://www.nature.com/nrg/series/index.html" | grep -E -o "nrg/series/[a-zA-Z/]+/index.html" | tr '\n' ' ')
 for a in $all_cate; do
     echo "Searching PDFs on this page:" $a
