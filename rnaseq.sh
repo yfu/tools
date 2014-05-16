@@ -130,8 +130,8 @@ step=$((step+1))
 echo "########################################################################"
 
 # Prepare for cufflinks
-declare -a cufflinks_g=("iGenome")
-# declare -a cufflinks_g=("flyBase" "iGenome")
+# declare -a cufflinks_g=("iGenome")
+declare -a cufflinks_g=("flyBase" "iGenome")
 iGenome=/data/fuy2/shared/iGenome.gtf
 # /home/hanb/nearline/Drosophila_melanogaster/UCSC/dm3/Annotation/Genes/genes.gtf
 flyBase=/data/fuy2/PE_Pipeline/common_files/dm3/dmel-all-no-analysis-r5.54.gene+CDS.gtf

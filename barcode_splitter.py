@@ -33,7 +33,7 @@ def main():
     parser.add_option("-p", "--prefix", action="store", type="string",
                       dest="fn_prefix", help="Optional filename prefix")
     parser.add_option("-v", "--verbose", action="store_true",
-                      dest="verbose", help="Optional filename prefix")
+                      dest="verbose", help="Verbose mode")
     
     # parser.add_option("-n", "--name", action="store", type="string",
     #                   dest="name", help="The string that is added for each new fastq files")
