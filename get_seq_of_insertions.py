@@ -3,14 +3,23 @@
 import fileinput, re
 import sys
 
-# Upstream insertions: it contains the insertions that happen before a genomic location
-# The genomic location is the key and the insertions are combined to form a list as the value
-u_ins = {}
-# Downstream insertions: it contains the insertions that happen after a genomic location
-d_ins = {}
+def pretty_print(d):
+    # Pretty-print the content of the dictionary.
+    for k in sorted(d.keys()):
+        print k + "\t", 
+        for i in d[k]:
+            print i,
+        print
+
 pat = re.compile(r'\d+\w')
 pat_num = re.compile(r'^\d+')
 pat_char = re.compile(r'\w$')
+
+# This is used to memorize the genomics location we are processing. If the location does not change,
+# then we should not output the content. If the location changes, we know we have finished processing
+# the current location and we go to the next location
+prev_loc_first = 0
+prev_loc_last = 0
 for line in fileinput.input():
     line = line.strip()
     e = line.split()
@@ -47,10 +56,7 @@ for line in fileinput.input():
         flag_soft_at_beg = True
         # This read is soft-clipped at the beginning
         my_key = chrom + "\t" + str(loc) + "\t" + "U"
-        if my_key not in u_ins.keys():
-            u_ins[my_key] = [ seq[0:num] ]
-        else:
-            u_ins[my_key].append( seq[0:num] )
+        print my_key + "\t" + seq[0:num]
 
     # print part_last + "**"
     m = re.findall(pat_num, part_last)
@@ -66,18 +72,6 @@ for line in fileinput.input():
         # This read is soft-clipped at the end
         loc = loc + read_len - num
         my_key = chrom + "\t" +  str(loc) + "\t" + "D"
-        if my_key not in d_ins.keys():
-            d_ins[my_key] = [ seq[read_len-num:] ]
-        else:
-            d_ins[my_key].append( seq[read_len-num:] )
-# print u_ins
+        print my_key + "\t" + seq[read_len-num:]
 
-def pretty_print(d):
-    # Pretty-print the content of the dictionary.
-    for k in sorted(d.keys()):
-        print k + "\t", 
-        for i in d[k]:
-            print i,
-        print
-pretty_print(u_ins)
-pretty_print(d_ins)
+
