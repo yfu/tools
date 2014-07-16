@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
+#
 # Split a big fastq file into several by barcode.
 # TODO: parallelize this script, if possible.
+# Author: Yu Fu
+#
 
 import sys, os, re
 import optparse # For compatibility with Python 2.6 and lower
