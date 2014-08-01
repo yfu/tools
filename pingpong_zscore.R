@@ -1,7 +1,14 @@
+#!/usr/bin/env Rscript
+
+# Usage: Rscript pingpong_zscore.R sample_name pp.dataframe
+
+
+args <- commandArgs(trailingOnly = TRUE)
+
 library(ggplot2)
 
-sample.name <- "Hi5.ox"
-a <- read.table("pp.dataframe")
+sample.name <- args[1] # "Hi5.unox.excl20"
+a <- read.table(args[2]) # read.table("pp.dataframe")
 
 my.df <- data.frame(zscore=0)
 a <- cbind(a, my.df)
@@ -23,8 +30,6 @@ for (i in 1:nrow(a)) {
     if(is.na(z)) { z = 0 }
     a[i, 3] = z
 }
-
-library(ggplot2)
 
 pdf.name <- paste(sample.name, ".pp_zscore.pdf", sep="")
 pdf(pdf.name)

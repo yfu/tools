@@ -32,6 +32,9 @@ bedtools slop -s -l ${ext5} -r ${ext3} -i ${input} -g genome.length > ext.tmp.be
 paste ext.tmp.bed2 ${input} | awk '{ print $1 "\t" $2 "\t" $3 "\t" "orig_" $8 "_" $9 "_" $10 "_" $13 "_ext_" $1 "_" $2 "_" $3 "_" $6 "_" $4 "_" $5 "\t" 0 "\t" $6 "\t" $7 }' > ext.bed2 # && rm ext.tmp.bed2
 
 bedtools getfasta -fi genome.fa -bed ext.bed2 -s -name -fo ext.fa
+
+# Split the fasta file into multiple files so that building index is faster and and bowtie will not complain about the size of the fasta file
+
 if [ ! -f ext.idx.1.ebwt ]; then
     bowtie-build ext.fa ext.idx 1>/dev/null
 fi
@@ -47,4 +50,7 @@ samtools view -b -h -f 0x10 mapping_result.sorted.bam > mapping_result.reverse_s
 # samtools view mapping_result.reverse_strand.sorted.bam | awk '{ print $10 "\t" $3 }' | sort -k1 | uniq | cut -f1 | uniq -c | sed -r 's/\s+([0-9]+)\s+([ATCGN]+)/\2\t\1/' > ntm_reads_mapped_to_reverse_index.txt
 samtools view mapping_result.reverse_strand.sorted.bam > mapping_result.reverse_strand.noheader.sorted.sam
 pp_hist.py mapping_result.reverse_strand.noheader.sorted.sam >pp.log 2>pp.err
+
+grep -E "[0-9]+\s[0-9]" pp.log > pp.dataframe
+pingpong_zscore.R ${input} pp.dataframe 
 # samtools view mapping_result.reverse_strand.sorted.bam | python pp_hist.py ntm_reads_mapped_to_reverse_index.txt

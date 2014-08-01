@@ -6,13 +6,16 @@
 # Usage: samtools -F 0x10 xxx.bam | python pp_hist.py my.bed2 > hist.txt
 # Author: Yu Fu (yfu at yfu dot me)
 import sys
+from collections import Counter
+
+
 
 def main():
+    pp_hist = Counter()
     # Read the file to get the ntm
     ntm = get_ntm(sys.argv[1])
     # Read the file again to get the histogram
     fin = open(sys.argv[1])
-    pp_hist = {}
     for line in fin.readlines():
         line = line.strip()
         e = line.split()
@@ -39,10 +42,11 @@ def main():
             # print weight
             offset = calc_offset(orig_start, orig_end, orig_strand, ext_start, ext_end, ext_strand, read_start, read_end, read_strand, pos)
             # print offset
-            if offset not in pp_hist.keys():
-                pp_hist[offset] = weight
-            else:
-                pp_hist[offset] += weight
+            pp_hist[offset] += weight
+            # if offset not in pp_hist.keys():
+            #     pp_hist[offset] = weight
+            # else:
+            #     pp_hist[offset] += weight
         else:
             continue
     for k in pp_hist.keys():
@@ -79,12 +83,12 @@ def from_the_same_locus(read_chrom, read_start, read_end, read_strand, ext_chrom
 def get_ntm(fn):
     ''' Read a sam file and report NTMs
     '''
-    ntm = {}
+    ntm = Counter()
     fin = open(fn)
     counter = 0
     for line in fin.readlines():
         if (counter % 10000 == 0):
-            print "Processed " + str(counter) + " alignments..."
+            print >>sys.stderr, "Processed " + str(counter) + " alignments..."
         counter += 1
         line = line.strip()
         e = line.split()
@@ -100,10 +104,7 @@ def get_ntm(fn):
         orig_start, orig_end, ext_start, ext_end, orig_copy, orig_ntm = int(orig_start), int(orig_end), int(ext_start), int(ext_end), int(orig_copy), int(orig_ntm)
         if from_the_same_locus(read_chrom, read_start, read_end, read_strand, ext_chrom, ext_start, ext_end, ext_strand) == False:
             seq = e[9]
-            if(seq not in ntm.keys()):
-                ntm[seq] = 1
-            else:
-                ntm[seq] += 1
+            ntm[seq] += 1
         else:
             continue
     return ntm
