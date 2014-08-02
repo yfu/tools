@@ -31,11 +31,16 @@ each = int(total / float(n))
 
 fh = open(fn, 'r')
 output = []
-for i in range(n):
-    output.append( open(fn + '.' + str(i), "w") )
 
-counter = 0;
+# Notice that inside the program, the index of files starts from 0
+# and the filenames start from 1
+for i in range(n):
+    output.append( open(fn + '.' + str(i+1), "w") )
+
+counter = -1;
 for line in fh.readlines():
+    if(line[0] == '>'):
+        counter += 1
     line = line.strip()
     file_number = int(counter / each)
     # In order to put the last bit of the file into the last file...
@@ -45,8 +50,6 @@ for line in fh.readlines():
     if(verbose==True):
         print str(file_number) +"\t" + line
     print >>output[file_number], line
-    if(line[0] == '>'):
-        counter += 1
 
 for i in range(n):
     output[i].close()
