@@ -8,6 +8,8 @@
 # A Bed2 file is just like a normal bed file, but it has the # copies as the 4th column and the NTM as the 5th column
 # TODO: include a script (bed_2_bed2.py) that, given the bed file (converted from sam file), outputs a bed2 file.
 
+# For simplicity, the intermediate files have fixed names (like STAR output).
+
 ext5=30;
 ext3=30
 # This applied to a single instance of bowtie only. Always set this to one.
@@ -15,14 +17,48 @@ cpu=1
 # $thread is used to specify the number of threads used when this script splits the fasta file and call bowtie
 thread=8
 
+OPTIND=1         # Reset in case getopts has been used previously in the shell.
+
+# Initialize our own variables:
+output_file=""
+verbose=0
+
+show_help() {
+    echo "A simple Ping-Pong score calculator."
+    echo "Usage: pps.sh -f your.bed2 -m 50 will set your.bed2 as \
+the input and 50 as the maximum number of alignments reported by bowtie."
+}
+
+while getopts "h?m:f:" opt; do
+    case "$opt" in
+    h|\?)
+        show_help
+        exit 0
+        ;;
+    m)  m=$OPTARG
+        ;;
+    f)  input=$OPTARG
+        ;;
+    esac
+done
+
+if [ -z "$m" ]; then
+    echo "Warning: you did not set up the parameter for -m. I will use 10."
+    m=10;
+fi
+
+if [ -z "$input" ]; then
+    echo "ERROR: you did not specify the input bed2 file. Exit..."
+    exit 2;
+fi
+echo "Maximum number of alignments allowed for bowite:" $m
+echo "The input file:" $input
+
 # awk -v ext=$ext 'BEGIN{OFS="\t" } { $2-=ext; if($2<0) {$2=0}; print  }' r1.no_adaptor_hi5_unox.1mm.bed2 | head
 
 # TODO: replace bedtools slop with with my own implementation, which is able to tell:
 # which reads are extended to contain N's and 
 # which reads reached the borders of scaffolds.
-
-# For simplicity, the intermediate files have fixed names (like STAR output).
-input=$1
 
 # If the genome length file does not exist, I'll create one.
 if [ ! -f genome.length ]; then 
@@ -55,13 +91,14 @@ cat ${input} | awk 'BEGIN{u="_"} { print ">" $1 u $2 u $3 u $4 u $5 u $6 "\t"; p
 # TODO: remove -m 100 to see if this affects the final result.
 map_sort_convert() {
     i=$1
-    bowtie -p 1 -f -v 0 -a -m 100 --best --strata -S ext.idx.p${i} orig_reads | samtools view -u -Sb - -F0x4 > mapping_result.p${i}.bam
-    samtools sort -@ 1 -m 5G -l 0 mapping_result.p${i}.bam mapping_result.p${i}.sorted && rm mapping_result.p${i}.bam
+    m=$2
+    bowtie -p 1 -f -v 0 -a -m ${m} --best --strata -S ext.idx.p${i} orig_reads | samtools view -u -Sb - -F0x4 > mapping_result.p${i}.bam
+    samtools sort -@ 1 -m 5G mapping_result.p${i}.bam mapping_result.p${i}.sorted && rm mapping_result.p${i}.bam
     samtools view -h -f 0x10 mapping_result.p${i}.sorted.bam > mapping_result.reverse_strand.p${i}.sorted.sam
     rm mapping_result.p${i}.sorted.bam
 }
 export -f map_sort_convert
-parallel -j ${thread} 'map_sort_convert {}' ::: $(seq 1 $thread)
+parallel -j ${thread} 'map_sort_convert {1} {2}' ::: $(seq 1 $thread) ::: $m
 
 cat $(ls mapping_result.reverse_strand.p*.sorted.sam) | grep -v '@' > mapping_result.reverse_strand.noheader.sorted.sam
 # samtools view -S -h mapping_result.reverse_strand.sorted.sam > mapping_result.reverse_strand.noheader.sorted.sam
