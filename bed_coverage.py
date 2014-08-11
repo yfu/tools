@@ -23,8 +23,6 @@ for line in sys.stdin.readlines():
     copy = float(line[3])
     ntm = float(line[4])
     strand = line[5]
-    if(strand != requested_strand):
-        continue
     seq = line[6]
     
     effective_copy = copy / ntm
@@ -33,10 +31,17 @@ for line in sys.stdin.readlines():
     coverages[chrom][1] = 2
 
     for i in range(start, end):
-        if i in coverages[chrom].keys():
-            coverages[chrom][i] += effective_copy
-        else: 
-            coverages[chrom][i] = effective_copy           
+        # The following three lines will assign 0 coverage to the regions that are covered by the other strand
+        # For example, if a read covers 1000-1200 on the forward strand, this script will record 1000-1200 on the reverse
+        # strand as 0.
+        if(strand != requested_strand):
+            if i not in coverages[chrom].keys():
+                 coverages[chrom][i] = 0
+        else:
+            if i in coverages[chrom].keys():
+                coverages[chrom][i] += effective_copy
+            else: 
+                coverages[chrom][i] = effective_copy           
 
 for i in sorted(coverages.keys()):
     cur_dict = coverages[i]
