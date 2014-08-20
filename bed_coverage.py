@@ -14,7 +14,12 @@ args = parser.parse_args()
 requested_strand = args.strand
 coverages = {}
 
+counter = 0
+
 for line in sys.stdin.readlines():
+    counter += 1
+    if(counter % 1000 == 0):
+        print >>sys.stderr, "I have processed " + str(counter) + " lines..."
     line = line.strip()
     line = line.split()
     chrom = line[0]
