@@ -46,7 +46,6 @@ def scaf_to_contig(seq, n_limit):
     
 
 def main():
-    print "This script does not generate correct contig stats for now."
     # debug
     # print scaf_to_contig('ATGC' + 'N' * 20 + 'ATGC' + 'N'*25 + 'ATGC' + 'N' * 30 + 'ATGC' + 'N' * 5 + 'ATGC', 25)
     # sys.exit("debug")
@@ -94,7 +93,6 @@ def main():
         if scaf_len_accum >= nxx_cutoff[nxx_flag - 1]:
             nxx_flag += 1
             print "N" + str(nxx_flag - 1) + '0' + "\t" + str(i)
-    
     print "Total contig length" + "\t"  + str(total_contig_len)
     print "Total lengths of gaps in contigs" + "\t"  + str(total_contig_gap)
 if __name__ == '__main__':
