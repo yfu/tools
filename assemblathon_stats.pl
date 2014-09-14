@@ -12,9 +12,11 @@
 
 use strict;
 use warnings;
-use FAlite;
 use Getopt::Long;
 use List::Util qw(sum max min);
+use FindBin;
+use lib "$FindBin::Bin";
+use FAlite;
 
 ###############################################
 # 
