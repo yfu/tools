@@ -28,7 +28,7 @@ def main():
                       dest="fastq_fn", help="Input fastq file")
     
     parser.add_option("-b", "--barcode", action="store", type="string",
-                      dest="barcode_fn", help="Input fastq file")
+                      dest="barcode_fn", help="Barcode file")
     
     parser.add_option("-m", "--mismatches", action="store", type="int",
                       dest="mismatches", help="Number of mismatches allowed")
