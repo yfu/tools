@@ -63,7 +63,6 @@ Author: Yu Fu (yfu at yfu dot me)"""
     barcodes_fh = {} # Seq as the key, file handle for output as value
     with open(barcode_fn) as barcode_in:
         for line in barcode_in.readlines():
-            line = line.strip()
             if not line:
                 break;
             tmp = re.split(r"\s*", line)
@@ -85,7 +84,8 @@ Author: Yu Fu (yfu at yfu dot me)"""
               + fastq_in.readline()
             if not rest_of_line:
                 break
-            p1, p2 = line1.split()
+            line1 = line1.strip()
+            p1, p2 = re.split(r'[\s#]', line1)  # line1.split()
             seq_barcode = p2.split(":")[-1]
 
             # print "The barcode from the current sequence is " + seq_barcode
