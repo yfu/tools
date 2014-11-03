@@ -10,13 +10,15 @@ import sys, os, re
 import optparse # For compatibility with Python 2.6 and lower
 from optparse import OptionParser
 
-def calc_str_dist(s1, s2):
-    """Calculate the distance between two strings of the same length
+def calc_str_dist(barcode, s):
+    """Calculate the distance between two strings of the same or different lengths:
+    In either case, use the first few letters to determine the distance. For example,
+    @FCD249BACXX:8:1101:1301:2095#ATCACGAT/1 belongs to barcode 'id1     ATCACG'
     """
-    l = len(s1)
+    l = len(barcode)
     dist = 0
     for i in range(l):
-        if s1[i] != s2[i]:
+        if barcode[i] != s[i]:
             dist += 1
     return dist
 
