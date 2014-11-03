@@ -24,7 +24,9 @@ def calc_str_dist(barcode, s):
 
 
 def main():
-    usage = "A simple script to split a fastq file by barcode"
+    usage = """A simple script to split a fastq file by barcode
+Author: Yu Fu (yfu at yfu dot me)"""
+    
     parser = OptionParser(usage=usage, version="%prog 0.1")
     parser.add_option("-f", "--fastq", action="store", type="string",
                       dest="fastq_fn", help="Input fastq file")
