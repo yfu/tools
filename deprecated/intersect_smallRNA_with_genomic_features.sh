@@ -2,7 +2,7 @@
 # Modified on 12/12/2014 by Yu Fu to keep counts in file
 
 # Usage: bash intersect_smallRNA_with_genomic_features.sh a/b/c.bed2 mm9 summaries/myprefix 8 intersections/
-# bash intersect_smallRNA_with_genomic_features.sh ../../2014-11-21/SRA/00dpp/genome_mapping/Zamore.SRA.total.00dpp.testis.trimmed.x_rRNA.x_hairpin.mm9v1.all.bed2 mm9 summaries/myprefix 8 intersections
+# intersect_smallRNA_with_genomic_features.sh /data/fuy2/prepachytene/results/2014-11-21/SRA/00dpp/genome_mapping/Zamore.SRA.total.00dpp.testis.trimmed.x_rRNA.x_hairpin.mm9v1.all.bed2 mm9 summaries/myprefix 8 intersections
 
 
 # piPipes, a set of pipelines for PIWI-interacting RNA (piRNA) and transposon analysis
@@ -22,16 +22,16 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-PIPELINE_DIR=/data/fuy2/piPipes
+PIPELINE_DIRECTORY=/data/fuy2/piPipes
 export TABLE=${PREFIX}.basic_stats
 GENOME_ALLMAP_BED2=$1
 GENOME=$2
 
-export PATH=${PIPELINE_DIR}/bin:$PATH
-COMMON_FOLDER=$PIPELINE_DIR/common/$GENOME
+export PATH=${PIPELINE_DIRECTORY}/bin:$PATH
+COMMON_FOLDER=$PIPELINE_DIRECTORY/common/$GENOME
 echo ${COMMON_FOLDER}/genomic_features
 source ${COMMON_FOLDER}/genomic_features
-source ${PIPELINE_DIR}/bin/piPipes_bash_functions 
+source ${PIPELINE_DIRECTORY}/bin/piPipes_bash_functions 
 
 #####################
 #function declartion#
@@ -76,26 +76,26 @@ print_header $siRNA_SUM
 print_header $piRNA_SUM
 
 # doing intersecting and counting
-para_file=$INTERSECT_OUTDIR/${SEED}.intersect.para
-for t in ${TARGETS[@]}
-do \
-	echo "bash $DEBUG piPipes_smallRNA_intersect.sh $INTERSECT_OUTDIR/${ALL_BED}  ${t} ${!t} $INTERSECT_OUTDIR/.stats" >> $para_file
-done
-ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
-rm -rf ${para_file}*
+# para_file=$INTERSECT_OUTDIR/${SEED}.intersect.para
+# for t in ${TARGETS[@]}
+# do \
+# 	echo "bash $DEBUG piPipes_smallRNA_intersect.sh $INTERSECT_OUTDIR/${ALL_BED}  ${t} ${!t} $INTERSECT_OUTDIR/.stats" >> $para_file
+# done
+# ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
+# rm -rf ${para_file}*
 
-PDFs=""
-for t in ${TARGETS[@]}
-do \
-	[ -s $INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.unique_species.pdf ] && PDFs=${PDFs}" "$INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.unique_species.pdf
-	[ -s $INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.all_reads.pdf ] && PDFs=${PDFs}" "$INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.all_reads.pdf
-	echo -ne "${t}\t" >> $smRNA_SUM
-	cat $INTERSECT_OUTDIR/.stats.${t}.smRNA >> $smRNA_SUM
-	echo -ne "${t}\t" >> $siRNA_SUM
-	cat $INTERSECT_OUTDIR/.stats.${t}.siRNA >> $siRNA_SUM
-	echo -ne "${t}\t" >> $piRNA_SUM
-	cat $INTERSECT_OUTDIR/.stats.${t}.piRNA >> $piRNA_SUM
-done
+# PDFs=""
+# for t in ${TARGETS[@]}
+# do \
+# 	[ -s $INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.unique_species.pdf ] && PDFs=${PDFs}" "$INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.unique_species.pdf
+# 	[ -s $INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.all_reads.pdf ] && PDFs=${PDFs}" "$INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.all_reads.pdf
+# 	echo -ne "${t}\t" >> $smRNA_SUM
+# 	cat $INTERSECT_OUTDIR/.stats.${t}.smRNA >> $smRNA_SUM
+# 	echo -ne "${t}\t" >> $siRNA_SUM
+# 	cat $INTERSECT_OUTDIR/.stats.${t}.siRNA >> $siRNA_SUM
+# 	echo -ne "${t}\t" >> $piRNA_SUM
+# 	cat $INTERSECT_OUTDIR/.stats.${t}.piRNA >> $piRNA_SUM
+# done
 
 # draw pie chart from exclusive groups
 ## rm -rf $INTERSECT_OUTDIR/exclusive_genomic_feature.bed ${TABLE}.exclusive_genomic_feature.count
@@ -109,21 +109,21 @@ do
 	bedSort ${!t} /dev/stdout | bedtools_piPipes merge -i stdin | awk -v name=$t 'BEGIN{OFS="\t"}{print $1,$2,$3,name}' >> $INTERSECT_OUTDIR/exclusive_genomic_feature.bed
 done
 
-[ -f $INTERSECT_OUTDIR/exclusive_genomic_feature.bed ] && \
-	bedtools_piPipes intersect -wo -a $GENOME_ALLMAP_BED2 -b $INTERSECT_OUTDIR/exclusive_genomic_feature.bed > ${TABLE}.exclusive_genomic_feature.bed && \
-	awk '{ct[$(NF-2)]+=$4/$5/$NF}END{for (f in ct) {print f"\t"ct[f]}}' ${TABLE}.exclusive_genomic_feature.bed >> ${TABLE}.exclusive_genomic_feature.count && \
-	awk -v total=$TOTAL_GENOME_MAPPING_READS 'BEGIN{OFS="\t"}{ if (ARGIND==1) {a+=$2; b[$1]=$2;} else {printf "%s\t%.1f\n",$1, (b[$1]?b[$1]:0);}}END{printf "unannotated\t%.1f\n", total-a }' ${TABLE}.exclusive_genomic_feature.count ${TABLE}.exclusive_genomic_feature.order > ${TABLE}.exclusive_genomic_feature.count1 && \
-	mv ${TABLE}.exclusive_genomic_feature.count1 ${TABLE}.exclusive_genomic_feature.count && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_pie.R $PDF_DIR/${PREFIX}.pie ${TABLE}.exclusive_genomic_feature.count && \
-	awk -v siRNA_bot=$siRNA_bot -v siRNA_top=$siRNA_top '{l=$3-$2; if (l>=siRNA_bot && l<=siRNA_top) ct[$(NF-2)]+=$4/$5/$NF}END{for (f in ct) {print f"\t"ct[f]}}' ${TABLE}.exclusive_genomic_feature.bed > ${TABLE}.exclusive_genomic_feature.siRNA.count && \
-	awk 'BEGIN{OFS="\t"}{ if (ARGIND==1) {a+=$2; b[$1]=$2;} else {printf "%s\t%.1f\n",$1, (b[$1]?b[$1]:0);}}' ${TABLE}.exclusive_genomic_feature.siRNA.count ${TABLE}.exclusive_genomic_feature.order > ${TABLE}.exclusive_genomic_feature.siRNA.count1 && \
-	mv ${TABLE}.exclusive_genomic_feature.siRNA.count1 ${TABLE}.exclusive_genomic_feature.siRNA.count && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_pie.R $PDF_DIR/${PREFIX}.siRNA.pie ${TABLE}.exclusive_genomic_feature.siRNA.count && \
-	awk -v piRNA_bot=$piRNA_bot -v piRNA_top=$piRNA_top '{l=$3-$2; if (l>=piRNA_bot && l<=piRNA_top) ct[$(NF-2)]+=$4/$5/$NF}END{for (f in ct) {print f"\t"ct[f]}}' ${TABLE}.exclusive_genomic_feature.bed > ${TABLE}.exclusive_genomic_feature.piRNA.count && \
-	awk 'BEGIN{OFS="\t"}{ if (ARGIND==1) {a+=$2; b[$1]=$2;} else {printf "%s\t%.1f\n",$1, (b[$1]?b[$1]:0);}}' ${TABLE}.exclusive_genomic_feature.piRNA.count ${TABLE}.exclusive_genomic_feature.order > ${TABLE}.exclusive_genomic_feature.piRNA.count1 && \
-	mv ${TABLE}.exclusive_genomic_feature.piRNA.count1 ${TABLE}.exclusive_genomic_feature.piRNA.count && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_pie.R $PDF_DIR/${PREFIX}.piRNA.pie ${TABLE}.exclusive_genomic_feature.piRNA.count
-rm -rf $INTERSECT_OUTDIR/exclusive_genomic_feature.bed ${TABLE}.exclusive_genomic_feature.order ${TABLE}.exclusive_genomic_feature.bed
+# [ -f $INTERSECT_OUTDIR/exclusive_genomic_feature.bed ] && \
+# 	bedtools_piPipes intersect -wo -a $GENOME_ALLMAP_BED2 -b $INTERSECT_OUTDIR/exclusive_genomic_feature.bed > ${TABLE}.exclusive_genomic_feature.bed && \
+# 	awk '{ct[$(NF-2)]+=$4/$5/$NF}END{for (f in ct) {print f"\t"ct[f]}}' ${TABLE}.exclusive_genomic_feature.bed >> ${TABLE}.exclusive_genomic_feature.count && \
+# 	awk -v total=$TOTAL_GENOME_MAPPING_READS 'BEGIN{OFS="\t"}{ if (ARGIND==1) {a+=$2; b[$1]=$2;} else {printf "%s\t%.1f\n",$1, (b[$1]?b[$1]:0);}}END{printf "unannotated\t%.1f\n", total-a }' ${TABLE}.exclusive_genomic_feature.count ${TABLE}.exclusive_genomic_feature.order > ${TABLE}.exclusive_genomic_feature.count1 && \
+# 	mv ${TABLE}.exclusive_genomic_feature.count1 ${TABLE}.exclusive_genomic_feature.count && \
+# 	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_pie.R $PDF_DIR/${PREFIX}.pie ${TABLE}.exclusive_genomic_feature.count && \
+# 	awk -v siRNA_bot=$siRNA_bot -v siRNA_top=$siRNA_top '{l=$3-$2; if (l>=siRNA_bot && l<=siRNA_top) ct[$(NF-2)]+=$4/$5/$NF}END{for (f in ct) {print f"\t"ct[f]}}' ${TABLE}.exclusive_genomic_feature.bed > ${TABLE}.exclusive_genomic_feature.siRNA.count && \
+# 	awk 'BEGIN{OFS="\t"}{ if (ARGIND==1) {a+=$2; b[$1]=$2;} else {printf "%s\t%.1f\n",$1, (b[$1]?b[$1]:0);}}' ${TABLE}.exclusive_genomic_feature.siRNA.count ${TABLE}.exclusive_genomic_feature.order > ${TABLE}.exclusive_genomic_feature.siRNA.count1 && \
+# 	mv ${TABLE}.exclusive_genomic_feature.siRNA.count1 ${TABLE}.exclusive_genomic_feature.siRNA.count && \
+# 	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_pie.R $PDF_DIR/${PREFIX}.siRNA.pie ${TABLE}.exclusive_genomic_feature.siRNA.count && \
+# 	awk -v piRNA_bot=$piRNA_bot -v piRNA_top=$piRNA_top '{l=$3-$2; if (l>=piRNA_bot && l<=piRNA_top) ct[$(NF-2)]+=$4/$5/$NF}END{for (f in ct) {print f"\t"ct[f]}}' ${TABLE}.exclusive_genomic_feature.bed > ${TABLE}.exclusive_genomic_feature.piRNA.count && \
+# 	awk 'BEGIN{OFS="\t"}{ if (ARGIND==1) {a+=$2; b[$1]=$2;} else {printf "%s\t%.1f\n",$1, (b[$1]?b[$1]:0);}}' ${TABLE}.exclusive_genomic_feature.piRNA.count ${TABLE}.exclusive_genomic_feature.order > ${TABLE}.exclusive_genomic_feature.piRNA.count1 && \
+# 	mv ${TABLE}.exclusive_genomic_feature.piRNA.count1 ${TABLE}.exclusive_genomic_feature.piRNA.count && \
+# 	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_pie.R $PDF_DIR/${PREFIX}.piRNA.pie ${TABLE}.exclusive_genomic_feature.piRNA.count
+# rm -rf $INTERSECT_OUTDIR/exclusive_genomic_feature.bed ${TABLE}.exclusive_genomic_feature.order ${TABLE}.exclusive_genomic_feature.bed
 
-( gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.features.pdf ${PDFs} && rm -rf ${PDFs} ) || \
-echo2 "Failed to merge pdf from features intersecting... check gs... Or use your favorarite pdf merge tool by editing line$LINENO in $0" "warning"
+# ( gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.features.pdf ${PDFs} && rm -rf ${PDFs} ) || \
+# echo2 "Failed to merge pdf from features intersecting... check gs... Or use your favorarite pdf merge tool by editing line$LINENO in $0" "warning"
