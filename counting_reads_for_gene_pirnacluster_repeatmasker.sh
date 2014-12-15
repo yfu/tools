@@ -1,10 +1,12 @@
+# Test data generation: head -n10000 ~/data/prepachytene/results/2014-11-21/SRA/00dpp/genome_mapping/Zamore.SRA.total.00dpp.testis.trimmed.x_rRNA.x_hairpin.mm9v1.all.bed2 > 00dpp.bed2
 
 funky() {
     # Given the category for the bed2 file and the bed2 file, this function prints the read count
     category=$1
     bed2_category=$2
     echo -ne "$category\t"
-    cat ${bed2_category} | awk '{ copy[$7]=$4; ntm[$7]=$5 }  END{ for (r in copy) { s += copy[r]/ntm[r]}; print s }'
+    ## This is correct
+    cat ${bed2_category} | awk '{ copy[$7]=$4; }  END{ for (r in copy) { s += copy[r] }; print s }'
 }
 
 
@@ -59,8 +61,17 @@ one_dpp() {
 	bedtools intersect -b ${base}/UCSC.RepeatMask.bed.${j}.gz -a ${bed2_intersect_with_repeatmasker} -u > ${ii}.intersect_with_repeatmasker.${j}.bed2
 	funky "RepeatMask.$j" ${ii}.intersect_with_repeatmasker.${j}.bed2 >> $stat_file
     done
-}
 
+    ########################################################################
+    # Unannotated
+    
+    base=/home/fuy2/data/piPipes/common/mm9
+    zcat ${base}/piRNA.cluster.bed6.gz ${base}/UCSC.refSeq.Genes.bed6.gz | cat - ${base}/UCSC.RepeatMask.bed > tmp.bed
+    sort -k1,1 -k2,2n tmp.bed > tmp2.bed && mv tmp2.bed tmp.bed
+    bedtools merge -i tmp.bed > piRNA.cluster.Genes.RepeatMask.bed.for.${ii} && rm tmp.bed
+    bedtools intersect -v -a ${bed2} -b piRNA.cluster.Genes.RepeatMask.bed.for.${ii} > ${ii}.unannoated.bed2
+    funky "Unannotated" ${ii}.unannoated.bed2 >> $stat_file
+}
 
 for i in 00 02 04 07 10 12 14 17 20 42; do
     one_dpp ${i} &
