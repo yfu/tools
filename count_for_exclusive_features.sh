@@ -38,8 +38,8 @@ RepeatMasker_rtRNA=${base}/UCSC.RepeatMask.bed.rtRNA.gz
 
 bn=$(basename $bed2)
 prefix=${bn%.bed2}
-sort -k1,1 -k2,2n $bed2 > ${prefix}.sorted.bed2
-bed2=${bn%.bed}.sorted.bed2
+sort --parallel=4 -k1,1 -k2,2n $bed2 > ${prefix}.sorted.bed2
+bed2=${prefix}.sorted.bed2
 
 count() {
     targets=($@)
