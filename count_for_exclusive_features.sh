@@ -43,7 +43,7 @@ bed2=${prefix}.sorted.bed2
 
 count() {
     targets=($@)
-    exclusive_targets=${bn}.exclusive_targets
+    exclusive_targets=${bn}.${RANDOM}${RANDOM}${RANDOM}.exclusive_targets
     
     if [ -f $exclusive_targets ]; then
 	rm $exclusive_targets
@@ -88,4 +88,4 @@ targets=(Genes_Exons_5UTR Genes_Exons_3UTR Genes_Intron)
 count "${targets[@]}" > ${prefix}.Genes_utr_level.count
 
 targets=(RepeatMasker_DNA RepeatMasker_LINE RepeatMasker_LTR RepeatMasker_Satellite RepeatMasker_SimpleRepeat RepeatMasker_SINE RepeatMasker_rtRNA)
-count "${targets[@]}" > ${prefix}.RepeatMasker_leve.count
+count "${targets[@]}" > ${prefix}.RepeatMasker_level.count
