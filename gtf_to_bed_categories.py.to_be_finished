@@ -1,0 +1,96 @@
+#!/usr/bin/env python
+
+# Given a GTF file this script will output several bed files showing the positions of exons, introns, 5UTR and 3UTR
+
+class Position():
+    def __init__(self, chrom, start, end, strand):
+        self.chrom = chrom
+        self.start = int(start)
+        self.end = int(end)
+        self.strand = strand
+    def __repr__(self):
+        return self.chrom + ":" + str(self.start) + "-" + str(self.end) + "," + str(self.strand)
+# pos = Position("chr1111", 11, 22, "+")
+# print pos
+
+class Transcript():
+    def __init__(self, transcript_id, gene_id):
+        self.gene_id = gene_id
+        self.transcript_id = transcript_id
+        self.exons = []
+        self.introns = []
+        self.cds = []
+        self.start_codon = ""
+        self.end_codon = ""
+        self.pos = ""
+    # def __repr__(self):
+    #     return repr(self.exons)
+    def add_exon(self, pos):
+        self.exons.append(pos)
+    def add_intron(self, pos):
+        self.introns.append(pos)
+    def add_cds(self, pos):
+        # Can one transcript model define more than 1 CDS? I should test this and put the answer here
+        # 
+        self.cds.append(pos)
+    def get_utr(self):
+        # Returns 3UTR and 5UTR
+        exons_sorted = sorted(exons, key=lambda x: x[0].start)
+        cds_sorted = sorted(cds, keys=lambda x: x[0].start)
+        for i in range(len(exons_sorted)):
+            for j in range(len(cds_sorted)):
+                while(exons_sorted[i].start < cds_sorted[i].start):
+                    five_utr.append(Position(self.chrom, ))
+        i = j = 0
+        while(exons_sorted[i].start < cds_sorted[i].start):
+
+import sys, re
+
+fn = sys.argv[1]
+fh = open(fn)
+
+pat = re.compile(r"transcript_id \"([^\"]+)\";")
+# pat = re.compile(r"transcript_id")
+pat2 = re.compile(r"gene_id \"([^\"]+)\";")
+transcripts = {}
+
+for line in fh:
+    line = line.strip()
+    col = line.split("\t")
+    chrom = col[0]
+    category = col[2]
+    start = int(col[3]) - 1
+    end = int(col[4])
+    strand = col[6]
+    info = col[8]
+    pos = Position(chrom, start, end, strand)
+    
+    m = pat.search(info)
+    if m is None:
+        print >> sys.stderr, "Wrong transcript id!"
+        print >> sys.stderr, "Error: malformatted line: " + line + "\n"
+        exit(2)
+    transcript_id = m.group(1)
+
+    m2 = pat2.search(info)
+    if m2 is None:
+        print >> sys.stderr, "Wrong gene id!"
+        print >> sys.stderr, "Error: malformatted line: " + line + "\n"
+        exit(2)
+    gene_id = m.group(1)
+    
+    if transcript_id not in transcripts:
+        transcripts[transcript_id] = Transcript(transcript_id, gene_id)
+    if category == "start_codon":
+        transcripts[transcript_id].start_codon = pos
+    if category == "end_codon":
+        transcripts[transcript_id].end_codon = pos
+    if category == "exon":
+        transcripts[transcript_id].add_exon(pos)
+    if category == "intron":
+        transcripts[transcript_id].add_intron(pos)
+    if category == "CDS":
+        transcripts[transcript_id].add_cds(pos)
+
+for t in transcripts.keys():
+    print len(transcripts[t].cds)
