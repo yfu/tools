@@ -15,7 +15,31 @@ three_utr = {}
 five_utr = {}
 n_exons_3utr = {}
 n_exons_5utr = {}
-
+def lonely_utr(utrs, end):
+    # Given a set of utrs for one transcript, output those UTRs which occupy whole exons, i.e. exclude the case in which a UTR and a CDS share an exon
+    if len(three_utr) <=1:
+        print >>sys.stderr("Error: lonely_utr() should be used only for those cases when a gene has multiple 3UTRs or multiple 5UTRs")
+        exit(2)
+    s = sorted(utrs, key=lambda x: x.start)
+    ret = []
+    strand = s[0].strand
+    if strand == "+":
+        if end == "3UTR":
+            ii = 0
+            for i in range(1, len(s)):
+                ret.append(s[i])
+        if end == "5UTR":
+            for i in range(0, len(s)-1):
+                ret.append(s[i])
+    else:
+        if end == "3UTR":
+            for i in range(0, len(s)-1):
+                ret.append(s[i])
+        if end == "5UTR":
+            for i in range(1, len(s)):
+                ret.append(s[i])        
+    return ret
+    
 class UTR():
     def __init__(self, transcript_id, chrom, start, end, strand, exon_number):
         self.transcript_id = transcript_id
@@ -25,7 +49,7 @@ class UTR():
         self.strand = strand
         self.exon_number = exon_number
     def __repr__(self):
-        return "\t".join([chrom, str(start), str(end), transcript_id, str(exon_number), strand])
+        return "\t".join([self.chrom, str(self.start), str(self.end), self.transcript_id + "_" + str(self.exon_number), "0", self.strand])
         
 for line in fh:
     line = line.strip()
@@ -56,33 +80,34 @@ for line in fh:
         print >> sys.stderr, "Error: malformatted line: " + line + "\n"
         exit(2)
     exon_number = m3.group(1)
-
+    
     if category == "3UTR":
-        if transcript_id not in small_n_exons_3utr:
-            small_n_exons_3utr[transcript_id] = exon_number
+        if transcript_id not in n_exons_3utr:
+            n_exons_3utr[transcript_id] = exon_number
         else:
-            if exon_number < small_n_exons_3utr[transcript_id]:
-                small_n_exons_3utr[transcript_id] = exon_number
+            if exon_number < n_exons_3utr[transcript_id]:
+                n_exons_3utr[transcript_id] = exon_number
     if category == "5UTR":
-        if transcript_id not in large_n_exons_5utr:
-            large_n_exons_5utr[transcript_id] = exon_number
+        if transcript_id not in n_exons_5utr:
+            n_exons_5utr[transcript_id] = exon_number
         else:
-            if exon_number > large_n_exons_5utr[transcript_id]:
-                large_n_exons_5utr[transcript_id] = exon_number
+            if exon_number > n_exons_5utr[transcript_id]:
+                n_exons_5utr[transcript_id] = exon_number
 
     if category == "3UTR":
         if transcript_id not in three_utr:
             three_utr[transcript_id] = []
+        # print UTR(transcript_id, chrom, start, end, strand, exon_number)
+        # three_utr[transcript_id].append(UTR(transcript_id, chrom, start, end, strand, exon_number))
         three_utr[transcript_id].append(UTR(transcript_id, chrom, start, end, strand, exon_number))
-    elif category == "5UTR":
-        if transcript_id not in five_utr:    
-            five_utr[transcript_id] = []
-        five_utr[transcript_id].append(UTR(transcript_id, chrom, start, end, strand, exon_number))
+    # elif category == "5UTR":
+    #     if transcript_id not in five_utr:    
+    #         five_utr[transcript_id] = []
+    #     five_utr[transcript_id].append(UTR(transcript_id, chrom, start, end, strand, exon_number))
 
-print three_utr
-for u in three_utr:
+for u in three_utr.keys():
     if len(three_utr[u]) > 1:
-        for i in three_utr[u]:
-            if i.exon_number > small_n_exons_3utr[i.transcript_id]:
-                print i
+        l = lonely_utr(three_utr[u], "3UTR")
+        for ll in l:
+            print ll
 
