@@ -6,13 +6,15 @@
 # fuy2@ummsres18:~/data/prepachytene/results/2015-01-14$ python get_splice_junction_bed.py ~/data/piPipes/common/mm9/UCSC.refSeq.Genes.bed12.gz 2>/dev/null | wc
 # 227241 2499651 13115805
 
-# Usage: python splice_junction_bed.py ~/data/piPipes/common/mm9/UCSC.refSeq.Genes.bed12.gz 2>/dev/null  > splice_junctions.bed12
+# Usage: python splice_junction_bed.py ~/data/piPipes/common/mm9/UCSC.refSeq.Genes.bed12.gz 2>/dev/null  > splice_junctions.50nt.bed12
+# To get fasta: cat splice_junctions.50nt.bed12 | awk 'BEGIN{OFS=FS="\t"} { $4=$4 "_" $1 "_" $2 "_" $3 "_" $6; print }' | bedtools getfasta -split -bed - -fi ~/data/piPipes/common/mm9/mm9.fa -fo - -fullHeader -s -name  | less
+
 # Author: Yu Fu
 
 import gzip, sys
 
 # Use the left 35nt and right 35nt around the ss
-s_range = 35
+s_range = 50
 
 fh = gzip.open(sys.argv[1])
 for line in fh:
