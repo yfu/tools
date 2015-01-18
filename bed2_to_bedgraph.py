@@ -49,7 +49,7 @@ for line in fh:
         if cur_p_crick == start and cur_chrom_crick == chrom:
             cur_signal_crick += copy/ntm
         else:
-            print >> output_crick, "\t".join([cur_chrom_crick, str(cur_p_crick), str(cur_p_crick + 1), str(cur_signal_crick)])
+            print >> output_crick, "\t".join([cur_chrom_crick, str(cur_p_crick), str(cur_p_crick + 1), str(-cur_signal_crick)])
             cur_p_crick = start
             cur_chrom_crick = chrom
             cur_signal_crick = float(copy) / ntm
