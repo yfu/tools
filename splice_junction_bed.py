@@ -6,8 +6,10 @@
 # fuy2@ummsres18:~/data/prepachytene/results/2015-01-14$ python get_splice_junction_bed.py ~/data/piPipes/common/mm9/UCSC.refSeq.Genes.bed12.gz 2>/dev/null | wc
 # 227241 2499651 13115805
 
-# Usage: python splice_junction_bed.py ~/data/piPipes/common/mm9/UCSC.refSeq.Genes.bed12.gz 2>/dev/null  > splice_junctions.50nt.bed12
-# To get fasta: cat splice_junctions.50nt.bed12 | awk 'BEGIN{OFS=FS="\t"} { $4=$4 "_" $1 "_" $2 "_" $3 "_" $6; print }' | bedtools getfasta -split -bed - -fi ~/data/piPipes/common/mm9/mm9.fa -fo - -fullHeader -s -name  | less
+# gtfToGenePred ~/data/piPipes/common/mm9/mm9.genes.gtf stdout | genePredToBed stdin stdout > UCSC.refSeq.Genes.bed12
+# Usage: python splice_junction_bed.py UCSC.refSeq.Genes.bed12 2>/dev/null  > splice_junctions.50nt.bed12
+# To get fasta: cat splice_junctions.50nt.bed12 | awk 'BEGIN{OFS=FS="\t"} { $4=$4 "_" $1 "_" $2 "_" $3 "_" $6; print }' | bedtools getfasta -split -bed - -fi ~/data/piPipes/common/mm9/mm9.fa -fo - -fullHeader -s -name > ss_flanking.50nt.fa
+
 
 # Author: Yu Fu
 
