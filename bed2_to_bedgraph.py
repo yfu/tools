@@ -30,24 +30,26 @@ for line in fh:
     copy = int(copy)
     ntm = int(ntm)
     if strand == "+":
-        if cur_p_watson == start and cur_chrom_watson == chrom:
+        if cur_p_watson == "":
+            cur_chrom_watson = chrom
+            cur_p_watson = start
+            cur_signal_watson += float(copy) / ntm
+        elif cur_p_watson == start and cur_chrom_watson == chrom:
             cur_signal_watson += copy/ntm
         else:
+            print >> output_watson, "\t".join([cur_chrom_watson, str(cur_p_watson), str(cur_p_watson + 1), str(cur_signal_watson)]) 
             cur_p_watson = start
             cur_chrom_watson = chrom
-            print >> output_watson, "\t".join([cur_chrom_watson, str(cur_p_watson), str(cur_p_watson + 1), str(cur_signal_watson)])
-            cur_p_watson = start
-            cur_chrom_watson = chrom
-            cur_signal_watson = copy / ntm
+            cur_signal_watson = float(copy) / ntm
     else:
+        if cur_p_crick == "":
+            cur_chrom_crick = chrom
+            cur_p_crick = start
+            cur_signal_crick += float(copy) / ntm
         if cur_p_crick == start and cur_chrom_crick == chrom:
             cur_signal_crick += copy/ntm
         else:
-            cur_p_crick = start
-            cur_chrom_crick = chrom
-            cur_p_crick = start
-            cur_chrom_crick = chrom
             print >> output_crick, "\t".join([cur_chrom_crick, str(cur_p_crick), str(cur_p_crick + 1), str(cur_signal_crick)])
             cur_p_crick = start
             cur_chrom_crick = chrom
-            cur_signal_crick = copy / ntm
+            cur_signal_crick = float(copy) / ntm
