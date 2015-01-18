@@ -15,7 +15,8 @@
 import gzip, sys
 
 # Use the left 35nt and right 35nt around the ss
-s_range = 50
+# s_range = 50
+s_range = 1
 
 fh = gzip.open(sys.argv[1])
 for line in fh:
