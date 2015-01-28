@@ -4,6 +4,7 @@
 # gtfToGenePred -genePredExt -geneNameAsName2 ~/data/piPipes/common/mm9/mm9.genes.gtf stdout
 
 # Usage: cat mm9.genes.genePred | transcript_len_genepred.py > mm9.transcript.length
+# Next step: awk 'BEGIN{OFS=FS="\t"} { c[$1]+=1; t[$1]+=$3 } END{ for(i in c) {print i, t[i]/c[i]} }' mm9.transcript.length > mm9.gene.avg_len
 import sys
 import fileinput
 
