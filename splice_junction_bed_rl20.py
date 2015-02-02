@@ -7,8 +7,7 @@
 # 227241 2499651 13115805
 
 # gtfToGenePred ~/data/piPipes/common/mm9/mm9.genes.gtf stdout | genePredToBed stdin stdout > UCSC.refSeq.Genes.bed12
-# The 2nd parameter, which is optional, specifies the half length of reported ranges.
-# Usage: python splice_junction_bed.py UCSC.refSeq.Genes.bed12 25 2>/dev/null  > splice_junctions.50nt.bed12
+# Usage: python splice_junction_bed.py UCSC.refSeq.Genes.bed12 2>/dev/null  > splice_junctions.50nt.bed12
 # To get fasta: cat splice_junctions.50nt.bed12 | awk 'BEGIN{OFS=FS="\t"} { $4=$4 "_" $1 "_" $2 "_" $3 "_" $6; print }' | bedtools getfasta -split -bed - -fi ~/data/piPipes/common/mm9/mm9.fa -fo - -fullHeader -s -name > ss_flanking.50nt.fa
 
 
@@ -16,14 +15,10 @@
 
 import gzip, sys
 
-# Use the left 50nt and right 50nt around the ss
+# Use the left 35nt and right 35nt around the ss
 s_range = 50
 
 fh = gzip.open(sys.argv[1])
-if len(sys.argv) > 2:
-    s_range = int(sys.argv[2])
-print >>sys.stderr, "Splice sites will be reported as ranges of " + str(s_range) + " * 2 nt"
-
 for line in fh:
     line = line.strip()
     col = line.split("\t")
