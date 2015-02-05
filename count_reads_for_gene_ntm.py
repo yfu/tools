@@ -53,7 +53,7 @@ for line in fh:
     # if len(iset) == 1:
     l = len(iset)
     for i in list(iset):
-        counts[ i ] += copy / ntm / l
+        counts[ i ] += float(copy) / ntm / l
 for g in counts:
     print g + "\t" + str(counts[g])
     
