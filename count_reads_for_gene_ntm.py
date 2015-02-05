@@ -12,17 +12,21 @@ import itertools
 
 annotation = sys.argv[1]
 bed2 = sys.argv[2]
+if (len(sys.argv)>3):
+    feature_type = sys.argv[3]
+else:
+    feature_type = "exon"
 
 gtf_file = HTSeq.GFF_Reader( annotation, end_included=True )
 # ga = HTSeq.GenomicArrayOfSets("auto", stranded=True)
-exons = HTSeq.GenomicArrayOfSets( "auto", stranded=True )
+features = HTSeq.GenomicArrayOfSets( "auto", stranded=True )
 counts = {}
 
 # for feature in itertools.islice( gtf_file, 10 ):
 for feature in gtf_file:
-    if feature.type == "exon":
+    if feature.type == feature_type:
         # feature name is the first attribute in the last column of a GTF file
-        exons[ feature.iv ] += feature.name
+        features[ feature.iv ] += feature.name
         counts[ feature.name ] = 0
 
 fh = open(bed2)
@@ -37,7 +41,7 @@ for line in fh:
 
     iv = HTSeq.GenomicInterval( chrom, start, end, strand )
     iset = None
-    for iv, step_set in exons[iv].steps():
+    for iv, step_set in features[iv].steps():
         # print iv, step_set
         if iset == None:
             iset = step_set.copy()
@@ -46,9 +50,10 @@ for line in fh:
             # the length of the set will be longer than 2 and will be dropped.
             iset.intersection_update(step_set)
             # iset.update(step_set)
-    if len(iset) == 1:
-        # print copy/ntm
-        counts[ list(iset)[0] ] += copy / ntm
+    # if len(iset) == 1:
+    l = len(iset)
+    for i in list(iset):
+        counts[ i ] += copy / ntm / l
 for g in counts:
     print g + "\t" + str(counts[g])
     
