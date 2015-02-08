@@ -1,0 +1,7 @@
+gencode.vM4.corrected_chrom_names.simplified.gtf is for cufflinks (because it does not have "gene" lines) 
+and I only keep gene_id, gene_name, transcript_id for cufflinks.
+
+gencode.vM4.corrected_chrom_names.gtf is the same as the GENCODE
+gencode.vM4.chr_patch_hapl_scaff.annotation.gtf, but the chromosome names has been
+corrected and those scaffolds that do not exist in UCSC genome fasta files are removed
+to be consistent.
