@@ -80,6 +80,7 @@ for aln in b:
     # Then 2nt gains (5 * 2/(2+4)) * 2
     # 3nt gains (5*4/(2+4)) * 4
     partners = {}
+    # Left and right positions are based on genome coordinates
     for i in range(-left, right+1):
         partners[i] = 0
     partners_sum = 0
