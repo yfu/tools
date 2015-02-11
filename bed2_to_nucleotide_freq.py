@@ -11,7 +11,7 @@ import fileinput
 width = 50
 m = []
 for i in range(width):
-    m.append({"A":0, "T":0, "C":0, "G":0})
+    m.append({"A":0, "T":0, "C":0, "G":0, "N":0})
 
 for line in fileinput.input():
     line = line.strip()
@@ -22,7 +22,7 @@ for line in fileinput.input():
     for i in range(len(seq)):
         m[i][seq[i]] += float(copy) / ntm
 print "\t" + "\t".join([str(i) for i in range(width)])
-for i in ["A", "T", "C", "G"]:
+for i in ["A", "T", "C", "G", "N"]:
     print i + "\t",
     for j in range(width):
         print str(m[j][i]) + "\t",
