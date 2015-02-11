@@ -72,7 +72,8 @@ for aln in b:
         print >>sys.stderr, "Found an alignment w/o strand information. I will ignore it..."
         continue
     five_prime_pos = iv.start_d
-
+    # print "Five primer position: ", five_prime_pos
+    # 
     # When one piRNA species has multiple potential partners, assign the weights according to the
     # abundances (impact) of all potential partners. For example, one species have an impact of 5
     # it has two partners: 2nt-overlap species of impact 2 and 3nt-overlap species of impact 4
@@ -92,22 +93,21 @@ for aln in b:
         p = HTSeq.GenomicPosition(target_chrom, target_pos, target_strand)
         # print i, p
         # print ga[ p ]
+        # Target
+        t = ga[ p ]
         if strand == "+":
-            # hist[i] += ga[ p ]
-            t = ga[ p ]
             partners[i] += t
             partners_sum += t
         elif strand == "-":
-            t = ga[p]
-            partners[-i] += ga[ p ]
+            partners[-i] += t
             partners_sum += t
-            # hist[-i] += ga[p]
+    # Orphan piRNA which does not have Ping-Pong partners
     # print partners_sum
     if partners_sum == 0:
         continue
     for k in partners:
         # print impact * partners[k] / partners_sum * partners[k]
-        hist[k] += impact * partners[k] / partners_sum * partners[k]
+        hist[k] += impact * (partners[k] / partners_sum) * partners[k]
 
 for i in range(-left, right+1):
     print str(i) + "\t" + str(hist[i])
