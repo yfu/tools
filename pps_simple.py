@@ -79,11 +79,14 @@ for aln in b:
     # it has two partners: 2nt-overlap species of impact 2 and 3nt-overlap species of impact 4
     # Then 2nt gains (5 * 2/(2+4)) * 2
     # 3nt gains (5*4/(2+4)) * 4
+
+    # Another way: assign equal weights to all potential partner species.
     partners = {}
     # Left and right positions are based on genome coordinates
     for i in range(-left, right+1):
         partners[i] = 0
     partners_sum = 0
+    partners_count = 0
     for i in range(-left, right+1):
         target_chrom = iv.chrom
         ## TODO: determine if five_prime_pos + i is <0 or >chromosome length
@@ -96,19 +99,28 @@ for aln in b:
         # print ga[ p ]
         # Target
         t = ga[ p ]
-        if strand == "+":
-            partners[i] += t
-            partners_sum += t
-        elif strand == "-":
-            partners[-i] += t
-            partners_sum += t
+        if t !=0:
+            if strand == "+":
+                partners[i] += t
+                partners_sum += t
+                partners_count += 1
+            elif strand == "-":
+                partners[-i] += t
+                partners_sum += t
+                partners_count +=1
     # Orphan piRNA which does not have Ping-Pong partners
     # print partners_sum
     if partners_sum == 0:
         continue
+    # print "partners_count ", partners_count
     for k in partners:
         # print impact * partners[k] / partners_sum * partners[k]
-        hist[k] += impact * (partners[k] / partners_sum) * partners[k]
+        ########################################################################
+        # Scoring scheme: assign partners based on partner abundances.
+        # hist[k] += impact * (partners[k] / partners_sum) * partners[k]
+        ########################################################################
+        # A different scoring scheme: evenly assign the current species to multiple partners
+        hist[k] += impact * partners[k] / partners_count
 
 for i in range(-left, right+1):
     print str(i) + "\t" + str(hist[i])
