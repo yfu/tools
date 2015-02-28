@@ -88,6 +88,9 @@ Author: Yu Fu (yfu at yfu dot me)"""
             p1, p2 = re.split(r'[\s#]', line1)  # line1.split()
             seq_barcode = p2.split(":")[-1]
 
+            if verbose == True:
+                print >> sys.stderr, "Current sequence: " + line1
+                print >> sys.stderr, "Current barcode: " + seq_barcode
             # print "The barcode from the current sequence is " + seq_barcode
             dist = 0
             matched = False
@@ -96,13 +99,18 @@ Author: Yu Fu (yfu at yfu dot me)"""
                 # print "Distance: " + str(dist) + "between " + i + "and " + seq_barcode
                 # print "Trying to match: " + i
                 if dist <= mismatches:
-                    print >> barcodes_fh[i], line1, rest_of_line,
+                    if verbose == True:
+                        print >> sys.stderr, "Current sequence matches barcode " + str(i)
+                    print >> barcodes_fh[i], line1
+                    print >> barcodes_fh[i], rest_of_line,
                     # print "Successful match"
                     matched = True
                     # if the barcode from one seq already matches,
                     # we don't need to try to match it with other barcodes
                     break;
             if matched == False:
+                if verbose == True:
+                    print >> sys.stderr, "Current sequence does not match any barcodes"
                 print >> barcodes_fh["unmatched"], line1, rest_of_line,
             # print "-" * 72
     for k in barcodes_fh.keys():
