@@ -30,7 +30,7 @@ intersect() {
 }
 
 prefix=$1
-prefix=02dpp
+# prefix=02dpp
 bed2=${prefix}.rmsk.bed2
 rep=$rmsk
 
@@ -48,6 +48,15 @@ for i in protein_coding lincRNA pseudogene; do
     eval ${i}_exon=exon.${i}.bed
     eval ${i}_upstream5k=gene.${i}.upstream5k.bed
     eval ${i}_downstream5k=gene.${i}.downstream5k.bed    
+done
+
+# For piRNA clusters
+targets=(prepachytene hybrid pachytene prepachytene_exon hybrid_exon pachytene_exon)
+for i in ${targets[@]}; do
+    eval t=\$$i
+    echo "Processing target: $t" >&2
+    bed2=${prefix}.cluster.bed2
+    intersect ${bed2} $t ${bed2%.bed2}.${i}
 done
 
 targets=(cluster lincRNA pseudogene protein_coding protein_coding_upstream5k protein_coding_downstream5k lincRNA_upstream5k lincRNA_downstream5k pseudogene_upstream5k pseudogene_downstream5k)
@@ -71,9 +80,11 @@ done
 
 # For those features that have exons:
 targets=(cluster lincRNA pseudogene protein_coding)
+## targets=(protein_coding)
 for i in ${targets[@]}; do
     echo "Processing exon target: $t" >&2
     eval t=\$${i}_exon
+    bed2=${prefix}.${i}.bed2
     intersect ${bed2} ${t} ${bed2%.bed2}.exon
 done
 
