@@ -1,8 +1,8 @@
-Group and count
+Group and count (for small RNA-seq data)
 =====
 ## run1-group-bed2.sh 
 
-Given a bed12 file, this script will group the read alignments into several categories
+Given a bed2 file, this script will group the read alignments into several categories
 
 ## run3-count.sh
 
