@@ -111,7 +111,8 @@ Author: Yu Fu (yfu at yfu dot me)"""
             if matched == False:
                 if verbose == True:
                     print >> sys.stderr, "Current sequence does not match any barcodes"
-                print >> barcodes_fh["unmatched"], line1, rest_of_line,
+                print >> barcodes_fh["unmatched"], line1
+                print >> barcodes_fh["unmatched"], rest_of_line,
             # print "-" * 72
     for k in barcodes_fh.keys():
         barcodes_fh[k].close()
