@@ -19,7 +19,7 @@ prefix=${transcriptome%.fasta}
 prefix=${prefix%.fa}
 
 output_prefix=${seq%.fasta}
-output_prefix=${seq%.fa}.${blast_cmd}
+output_prefix=${output_prefix%.fa}.${blast_cmd}
 
 if [ ! -f Trinity.short_header.fasta.nhr ]; then
     makeblastdb -dbtype nucl -in ${transcriptome}
