@@ -10,6 +10,7 @@
 #
 # Usage: pps_simple.py ~/data/shared/mm10/mm10.chrom.sizes ../2014-11-21/SRA_mm10g/00dpp/genome_mapping/Zamore.SRA.total.00dpp.testis.trimmed.x_rRNA.x_hairpin.mm10gv1.all.bed2
 # Note that when i=0, it means there is exactly 1nt overlap (in this case, the pp partners have the 5' end at the same position)
+# If there is a strong pp signal, you should be able to see a peak at i=9
 
 import HTSeq
 import sys

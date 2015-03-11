@@ -8,6 +8,7 @@ lendis <- args[1]
 output <- args[2]
 
 ## lendis <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/Hi5.nodavirus.ox.lendis"
+## lendis <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/Hi5.nodavirus.unox.lendis"
 ## output <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/test.pdf"
 
 a <- read.table(lendis)
@@ -24,7 +25,8 @@ if( ncol(a) == 2) {
     my.mean <- round( mean(rep(a$V1, times=a$V2)), 2)
     
     pdf(output)
-    ggplot(a, aes(x=V1, y=V2)) + geom_bar(stat="identity") + xlab("Read length") + ylab("Number of reads") + ggtitle(paste("Read length distribution", "\nTotal: ", my.total, " Median: ", my.median, " Mean: ", my.mean, sep=""))
+    p <- ggplot(a, aes(x=V1, y=V2)) + geom_bar(stat="identity") + xlab("Read length") + ylab("Number of reads") + ggtitle(paste("Read length distribution", "\nTotal: ", my.total, " Median: ", my.median, " Mean: ", my.mean, sep=""))
+    print(p)
     dev.off()
 }
 
