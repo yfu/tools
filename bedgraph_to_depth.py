@@ -18,7 +18,7 @@ start = int(sys.argv[2])
 end   = int(sys.argv[3])
 
 i = start
-
+chrom = ""
 for line in bg.readlines():
     if i > end:
         break
