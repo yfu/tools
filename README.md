@@ -14,3 +14,6 @@ Given a fasta file, this script outputs two columns, which is suitable for line-
 ## splice_junction_bed.py
 
 Given a bed12 format file, this script will output the bed12 describing left and right flanking regions of the splice site.
+
+## pps_plot.R
+Given the scores from pps_simple.py, this script will plot them.
