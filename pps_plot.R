@@ -9,8 +9,8 @@ args <- commandArgs(TRUE)
 fn <- args[1]
 output <- args[2]
 
-fn <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/Hi5.nodavirus.unox.pps"
-output <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/test.pdf"
+## fn <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/Hi5.nodavirus.unox.pps"
+## output <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/test.pdf"
 
 a <- read.table(fn)
 
