@@ -13,7 +13,7 @@ plot_gene_signal <- function(a, tt, output) {
     ## adapted from https://github.com/bowhan/piPipes/blob/c98b12324553ca487fb634b584ca213300044903/bin/piPipes.R
     pdf (output)
     par (bty="n")
-    plot (a$V2,a$V3, xlim=c(0,nrow(a)), ylim=c(1.2*min(a$V4), 1.2*max(a$V3)) , type='n', xlab=paste("Gene body", nrow(a), sep=" "), ylab="Signal", tck=0.01, main=a[1,1])
+    plot (a$V2,a$V3, xlim=c(0,nrow(a)), ylim=c(1.2*min(a$V4), 1.2*max(a$V3)) , type='n', xlab=paste("Gene body", nrow(a), sep=" "), ylab="Signal", tck=0.01, main=tt)
     points (a$V2, a$V3, col="blue", type="s")
     points (a$V2, a$V4, col="red", type="s")
     abline (h=0, lty=2)

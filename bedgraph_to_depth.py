@@ -7,6 +7,9 @@
 # half closed
 
 import sys
+import re
+
+pat = re.compile(r"^track ")
 
 if(len(sys.argv) !=4):
     print "Usage: %s my.bedgraph 0 1234" % sys.argv[0]
@@ -20,6 +23,10 @@ end   = int(sys.argv[3])
 i = start
 chrom = ""
 for line in bg.readlines():
+    if pat.match(line) is not None:
+        print >>sys.stderr, "Found a track line in the bedGraph file. Skipping:"
+        print >>sys.stderr, line
+        continue
     if i > end:
         break
     # print line

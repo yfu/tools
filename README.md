@@ -17,3 +17,9 @@ Given a bed12 format file, this script will output the bed12 describing left and
 
 ## pps_plot.R
 Given the scores from pps_simple.py, this script will plot them.
+
+## bed12_to_bedgraph.sh
+
+Given a bed12 file for just one gene, this script outputs the gene plot (for all_mappers, uniq_mappers)
+
+Usage: bed12_to_depth.sh one_gene.bed12 gene.name gene.length n_all_mappers n_uniq_mapper                           
