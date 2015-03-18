@@ -5,6 +5,7 @@
 # This script glues the bedgraph file with simple plotting functions in R.
 # start and end parameters are like those in bed files, i.e. start from 0 and half open
 # half closed
+# Usage: bedgraph_to_depth.py my.bedGraph 0 1000
 
 import sys
 import re

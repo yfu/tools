@@ -31,5 +31,10 @@ output <- args[3]
 df <- read.table(input)
 df$V2 <- as.integer(df$V2)
 df$V3 <- as.numeric(df$V3)
-df$V4 <- as.numeric(df$V4)
+if (ncol(df) <= 3) {
+    write("The input file only has 3 columns.", stderr())
+    df$V4 <-0
+} else {
+    df$V4 <- as.numeric(df$V4)
+}
 plot_gene_signal(df, my.title, output)
