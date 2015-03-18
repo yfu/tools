@@ -9,7 +9,7 @@
 
 plot_rna_rectangles <- function (fn, each.length=100) {
     library(ggplot2)
-    fn <- "Hi5.nodavirus.unox.bed2"
+    ## fn <- "Hi5.nodavirus.unox.bed2"
     a <- read.table(fn)
     a$ymin <- 0
     a$ymax <- 0
