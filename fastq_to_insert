@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+f=$1
+cpu=8
+
+cat ${1:-/dev/stdin} | awk -v bottom=15 -v top=40 '{ if(NR%4==2) { l=length($0); if(l>=bottom && l<=top) {print $0} } }' | sort --parallel=${cpu} -S 20G | uniq -c | awk '{ print $2 "\t" $1 }'
