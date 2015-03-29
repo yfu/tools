@@ -1,0 +1,41 @@
+#!/usr/bin/env python
+
+import sys
+import fileinput
+import numpy as np
+
+def avg(l):
+    return sum(l) / float(len(l))
+
+total_reads = 0
+total_species = 0
+# Used to calculate the average ntm and copy number
+reads_ntm = {}
+reads_copy = {}
+
+for line in fileinput.input():
+    line = line.strip()
+    col = line.split()
+    chrom, start, end, copy, ntm, strand, seq = col
+    start = int(start)
+    end = int(end)
+    copy = int(copy)
+    ntm = int(ntm)
+
+    total_reads += float(copy) / ntm
+    total_species += 1.0 / ntm
+    reads_ntm[seq] = ntm
+    reads_copy[seq] = copy
+
+avg_ntm = avg( reads_ntm.values() )
+median_ntm = np.median( np.array( reads_ntm.values() ), axis=0)
+avg_copy = avg( reads_copy.values() )
+median_copy = np.median( np.array( reads_copy.values() ), axis=0)
+
+print "number_reads" + "\t" + str(total_reads)
+print "number_species" + "\t" + str(total_species)
+print "average_species_copy_number" + "\t" + str(avg_copy)
+print "average_species_ntm" + "\t" + str(avg_ntm)
+print "median_species_copy_number" + "\t" + str(median_copy)
+print "median_species_ntm" + "\t" + str(median_ntm)
+    
