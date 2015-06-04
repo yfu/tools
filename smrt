@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# SMRT_ROOT is defined in .bashrc already
+action=$1
+
+if [ ${action} == "start" ]; then
+    $SMRT_ROOT/admin/bin/smrtportald-initd start
+    $SMRT_ROOT/admin/bin/kodosd start
+elif [ ${action} == "stop" ]; then
+    $SMRT_ROOT/admin/bin/kodosd stop
+    $SMRT_ROOT/admin/bin/smrtportald-initd stop
+else
+    echo "Unrecognized action:" ${action} > /dev/stderr
+fi
+
+
