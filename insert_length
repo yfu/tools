@@ -1,0 +1,5 @@
+#!/usr/bin/awk -f
+
+# Given a insert file, this script output the lendis in a table
+{ l=length($1); d[l]+=$2 }
+END{ n=asorti(d, sorted); for (i=1; i<=n; i++) { print sorted[i], d[sorted[i]] } }
