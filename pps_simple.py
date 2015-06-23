@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 # A simple Ping-Pong score calculator
+# This script is DEPRECATED
+# Use gppc.sh instead.
 # Given a sorted bed2 file, this script will output the nucleotide offset in
 # the first column and number of read pairs having such an offset in 
 # the second column
