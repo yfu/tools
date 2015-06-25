@@ -60,6 +60,7 @@ for line in fh:
         else:
             # Strict: this requires that the read maps to one gene. If it ever maps to two or more genes,
             # the length of the set will be longer than 2 and will be dropped.
+            # See http://www-huber.embl.de/users/anders/HTSeq/doc/tour.html?highlight=intersection_update#counting-reads-by-genes for details
             iset.intersection_update(step_set)
             # iset.update(step_set)
     l = len(iset)
