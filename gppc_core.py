@@ -18,7 +18,7 @@ import sys
 from multiprocessing import Process, Queue
 # Load the bed2 file as a
 # Load a ChromeInfo file to set up the numpy array
-
+BLOCK = 1000000
 def d1(s, rang, flag):
     '''5' to 5' distance or 3' to 3' distance:
 The sign of the distance is based on the reference read (the reference reads always goes frmo the left to the right)
@@ -33,7 +33,7 @@ flag can be "ds" (different strand), "ss" (same strand), "all" (no restriction o
     if flag == "ds":
         for i in range(s.shape[0]):
             count += 1
-            if(count % 1000000 == 0):
+            if(count % BLOCK == 0):
                 print "Processing signals: " + str(count)
             # Target strand
             cur_sig_w = s[i, 0]
@@ -57,7 +57,7 @@ flag can be "ds" (different strand), "ss" (same strand), "all" (no restriction o
     elif flag == "ss":
         for i in range(s.shape[0]):
             count += 1
-            if(count % 1000000 == 0):
+            if(count % BLOCK == 0):
                 print "Processing signals: " + str(count)
             # Target strand
             cur_sig_w = s[i, 0]
@@ -76,28 +76,11 @@ flag can be "ds" (different strand), "ss" (same strand), "all" (no restriction o
                         ret[-j] += s[i+j, 1] * cur_sig_c
                     except IndexError:
                         pass
-    elif flag == "all":
-        for i in range(s.shape[0]):
-            count += 1
-            if(count % 1000000 == 0):
-                print "Processing signals: " + str(count)
-            # Target strand
-            cur_sig_w = s[i, 0]
-            cur_sig_c = s[i, 1]
-            if cur_sig_w != 0:
-                for j in range(-rang, rang+1):
-                    # Find signal on the different strand
-                    try:
-                        ret[j] += s[i+j, 0] * cur_sig_w
-                    except IndexError:
-                        pass
-            if cur_sig_c != 0 :
-                for j in range(-rang, rang+1):
-                    # NOTICE the negative sign here
-                    try:
-                        ret[-j] += s[i+j, 1] * cur_sig_c
-                    except IndexError:
-                        pass
+    else:
+        print >>sys.stderr, "Unrecognized parameter: " + flag
+    # Each pair is counted twice...
+    for i in range(-rang, rang+1):
+        ret[i] = ret[i] / 2        
     return ret
 
 def d1_worker(s, rang, flag, q):
@@ -108,4 +91,64 @@ def d1_worker(s, rang, flag, q):
 def d2(s5, s3, rang, flag):
     '''d2 calculates 5' to 3' distances. Named d2 because it accepts two matrices...
 '''
-    
+    ret = {}
+    for i in range(-rang, rang+1):
+        ret[i] = 0.0
+    count = 0
+    if flag == "ds":
+        for i in range(s5.shape[0]):
+            count += 1
+            if(count % BLOCK == 0):
+                print "Processing signals: " + str(count)
+            # Target strand
+            cur_sig_w = s5[i, 0]
+            cur_sig_c = s5[i, 1]
+            if cur_sig_w != 0:
+                for j in range(-rang, rang+1):
+                    # Find signal on the different strand
+                    try:
+                        ret[j] += s3[i+j, 1] * cur_sig_w
+                    except IndexError:
+                        # print >>sys.stderr, "Encounter choromosome boundaries"
+                        pass
+            if cur_sig_c != 0 :
+                for j in range(-rang, rang+1):
+                    # NOTICE the negative sign here
+                    try:
+                        ret[-j] += s3[i+j, 0] * cur_sig_c
+                    except IndexError:
+                        pass
+                        # print >>sys.stderr, "Encounter choromosome boundaries"
+    elif flag == "ss":
+        for i in range(s5.shape[0]):
+            count += 1
+            if(count % BLOCK == 0):
+                print "Processing signals: " + str(count)
+            # Target strand
+            cur_sig_w = s5[i, 0]
+            cur_sig_c = s5[i, 1]
+            if cur_sig_w != 0:
+                for j in range(-rang, rang+1):
+                    # Find signal on the different strand
+                    try:
+                        ret[j] += s3[i+j, 0] * cur_sig_w
+                    except IndexError:
+                        # print >>sys.stderr, "Encounter choromosome boundaries"
+                        pass
+            if cur_sig_c != 0 :
+                for j in range(-rang, rang+1):
+                    # NOTICE the negative sign here
+                    try:
+                        ret[-j] += s3[i+j, 1] * cur_sig_c
+                    except IndexError:
+                        pass
+                        # print >>sys.stderr, "Encounter choromosome boundaries"
+    else:
+        print >>sys.stderr, "Unrecognized parameter: " + flag
+    # No need to divide the values by 2 because each pair is counted just once
+    return ret
+        
+def d2_worker(s5, s3, rang, flag, q):
+    '''Just a wrapper around d2
+'''
+    q.put( d2(s5, s3, rang, flag) )

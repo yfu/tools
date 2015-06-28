@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from gppc_core import d1, d1_worker
+from gppc_core import d1, d1_worker, d2, d2_worker
 import sys
 import numpy as np
 from scipy.sparse import csc_matrix
@@ -10,7 +10,8 @@ from multiprocessing import Process, Queue
 
 if (len(sys.argv)<5):
     print >>sys.stderr, "Usage: gppc1.py asm.ChromInfo my.bed2 [55|33|53] [ss|ds|all]"
-    print >>sys.stderr, "asm.ChromInfo contains the chromosome length, 55|33|53: 5' to 5', 3' to 3', 5' to 3' distance, ss|sd|all: consider reads on the same strand, different strand, both strands"
+    print >>sys.stderr, "asm.ChromInfo contains the chromosome length, 55|33|53: 5' to 5', 3' to 3', 5' to 3' distance, ss|ds: consider reads on the same strand, different strand"
+    print >>sys.stderr, "If you ever want to calculate distances considering reads on the same strand and the different strand, consider run ss and ds and then add them together"    
     exit(1)
 rang =50
 # When index is 0, there is just one nt overlap
@@ -75,21 +76,42 @@ if __name__ == "__main__":
     elif sys.argv[3] == "33":
         s = sig3
     elif sys.argv[3] == "53":
-        print >>sys.stderr, "53 has not been implemented yet..."
+        s5 = sig5
+        s3 = sig3
     threads = []
-    for i in ("TAS",):        
-        p = Process(target=d1_worker, args=(s[i], rang, ori, q))
-        p.start()
-        threads.append(p)
-    for t in threads:
-        t.join()
-    print q.qsize()
-    while(q.empty() == False):
-        r = q.get()
-        print r
-        for i in range(-rang, rang+1):
-            hist[i] += r[i]
-    print hist
+
+    if sys.argv[3] == "55" or sys.argv[3] == "33":
+        for i in ("TAS",):        
+            p = Process(target=d1_worker, args=(s5[i], s3[i], rang, ori, q))
+            p.start()
+            threads.append(p)
+        for t in threads:
+            t.join()
+        print q.qsize()
+        while(q.empty() == False):
+            r = q.get()
+            print r
+            for i in range(-rang, rang+1):
+                hist[i] += r[i]
+        print hist
+    elif sys.argv[3] == "53":
+        for i in ("TAS",):        
+            p = Process(target=d2_worker, args=(s5[i], s3[i], rang, ori, q))
+            p.start()
+            threads.append(p)
+        for t in threads:
+            t.join()
+        print q.qsize()
+        while(q.empty() == False):
+            r = q.get()
+            print r
+            for i in range(-rang, rang+1):
+                hist[i] += r[i]
+        print hist
+
+
+
+        
     for i in range(-rang, rang+1):
         print str(i) + "\t" + str(hist[i])
 
