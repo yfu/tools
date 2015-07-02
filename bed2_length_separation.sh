@@ -18,6 +18,8 @@ source /data/fuy2/piPipes/common/${assembly}/variables
 
 if [[ -z ${output_dir} ]]; then
     output_dir="."
+else
+    mkdir -p ${output_dir}
 fi
 # Just in case the bed2 file does not end up with .all.bed2
 prefix=${bed2%.bed2}
