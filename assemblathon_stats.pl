@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -I/home/fuy2/repo/tools
 #
 # assemblathon_stats.pl
 #
@@ -10,7 +10,8 @@
 # Last updated by: $Author: keith $
 # Last updated on: $Date: 2011/10/13 00:07:00 $
 
-use strict;
+use lib "/home/fuy2/repo/tools";
+# use strict;
 use warnings;
 use Getopt::Long;
 use List::Util qw(sum max min);
@@ -282,7 +283,7 @@ sub sequence_statistics{
 							  1000000  => '1M',
 							  10000000 => '10M');
 
-	foreach my $size qw(1000 10000 100000 1000000 10000000){
+	foreach my $size (qw(1000 10000 100000 1000000 10000000)){
 		my $matches = grep { $_ > $size } @{$data{$type}{lengths}};
 		my $percent = sprintf("%.1f", ($matches / $count) * 100);
 
@@ -407,7 +408,7 @@ sub sequence_statistics{
     $bases{N} = ($seq =~ tr/N/N/);
 	
 	my $base_count = 0;
-	foreach my $base qw (A C G T N){
+	foreach my $base (qw (A C G T N)){
 		my $percent = sprintf("%.2f", ($bases{$base} / $length) * 100);
 		$desc = "$type %$base";
 		printf "%${w}s %10s\n", $desc, $percent;
