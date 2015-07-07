@@ -9,7 +9,7 @@ while getopts "hd:i:c:o:g:B:xvLD" OPTION; do
     case $OPTION in
 	h)usage && exit 0 ;;
 	d)PR=`readlink -f ${OPTARG}`;; # the directory of pipeline results
-	g)export GENOME=${OPTARG};;
+	## g)export GENOME=${OPTARG};;
 	o)OUTDIR=`readlink -f ${OPTARG}` ;;
 	c)CPU=$OPTARG ;;
     esac
@@ -20,8 +20,8 @@ xrRNA_LEFT_FQ=$(readlink -e ${PR}/input_read_files/*.x_rRNA.1.fq)
 xrRNA_RIGHT_FQ=$(readlink -e ${PR}/input_read_files/*.x_rRNA.2.fq)
 PREFIX=$(basename $PR)
 PREFIX=${PREFIX%.x_rRNA.1.fq}
-xrRNA_LEFT_FQ=test.r1.fq
-xrRNA_RIGHT_FQ=test.r2.fq
+# xrRNA_LEFT_FQ=test.r1.fq
+# xrRNA_RIGHT_FQ=test.r2.fq
 echo ${PREFIX}
 echo ${xrRNA_LEFT_FQ}
 echo ${xrRNA_RIGHT_FQ}
@@ -84,13 +84,12 @@ mkdir -p ${DIRECTMAPPING_DIR}
 	awk -v etr=$END_TO_REVERSE_STRAND -v MAPQ=10 'BEGIN{FS=OFS="\t"}{l=split($4,arr,""); if (arr[l]==etr) $6=($6=="+"?"-":"+"); if ($5 > MAPQ) print $0}' > ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_NAME}.sorted.unique.bed && \
     touch .status.direct_mapping
 
-PR=/data/fuy2/pachytene/data/Xuan/Zamore.RSQ.B6.0dpp.rep1
-PREFIX=Zamore.RSQ.B6.0dpp.rep1
+# PR=/data/fuy2/pachytene/data/Xuan/Zamore.RSQ.B6.0dpp.rep1
+# PREFIX=Zamore.RSQ.B6.0dpp.rep1
 
 CUFFLINKS_DIR=${PR}/cufflinks_output
 MapMass=$(grep 'Normalized Map Mass' $CUFFLINKS_DIR/${PREFIX}.cufflinks.log | cut -d' ' -f4)
 export NormScale=`echo $MapMass | awk '{printf "%f",1000000.0/$1}'`
-PREFIX=test
 
 eXpressBATCH=10
 [ ! -f .${OUTDIR}/.status.eXpress_quantification ] && \
