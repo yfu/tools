@@ -33,7 +33,7 @@ mkdir -p ${OUTDIR} && cd ${OUTDIR}
 BW_OUTDIR=$OUTDIR
 
 echo2 "Making bigWig from sorted bam"
-echo "${BEDTOOLS} bamtobed -bed12 -tag NH -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.bam > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.bed12 && \
+${BEDTOOLS} bamtobed -bed12 -tag NH -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.bam > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.bed12 && \
     $bedtools_piPipes genomecov -scale $NormScale -split -bg -i ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.bed12 -g $CHROM > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.ns.bedGraph && \
-    bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.ns.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.ns.bigWig"
+    bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.ns.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.ns.bigWig
 
