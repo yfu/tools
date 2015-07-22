@@ -61,7 +61,7 @@ STAR \
 
 # Make bigWig files from the regular RNA-seq reads
 # Normalization factor = 1
-bam_to_bigwig.sh ~/data/shared/hg19/hg19.ChromInfo.txt test.100000.hg19.Aligned.out.sam 1
+# bam_to_bigwig.sh ~/data/shared/hg19/hg19.ChromInfo.txt ${OUTPUT_PREFIX}Aligned.out.sam 1
 
 ###########################################################################
 # Part 2: mapping reads to 5' introns to extract useful part of the reads #
