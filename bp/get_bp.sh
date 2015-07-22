@@ -61,7 +61,7 @@ STAR \
 
 # Make bigWig files from the regular RNA-seq reads
 # Normalization factor = 1
-# bam_to_bigwig.sh ~/data/shared/hg19/hg19.ChromInfo.txt ${OUTPUT_PREFIX}Aligned.out.sam 1
+bam_to_bigwig.sh ~/data/shared/hg19/hg19.ChromInfo.txt ${OUTPUT_PREFIX}Aligned.out.sam 1
 
 ###########################################################################
 # Part 2: mapping reads to 5' introns to extract useful part of the reads #
@@ -104,7 +104,7 @@ echo "Mapping to 23nt introns:" > ${log}
 # fpl: five prime length (23) requiring part of the read to match the 5' end of an intron
 # tl: After trimming, there should be at least tl (20) nt left on the reads
 # gawk -v fpl=23 -v tl=20 '{ pat="(^[0-9]+)S" fpl "M"; match($6, pat, ary); a=ary[1]; if(a>=tl) { print ">" $3 "|" substr($10, a, fpl); print substr($10, 1, a); }}' ${map_to_5_intron_c} >> ${map_to_5_intron_fa}
-map_to_5_intron_after=${prefix}.after.fa
+map_to_5_intron_after=${prefix}.before.fa
 map_to_intron=${prefix}.lariat_and_5intron.map_to_intron.bam
 map_to_intron_log=${prefix}.lariat_and_5intron.map_to_intron.log
 bowtie2 -x ${index_intron} -f -U ${map_to_5_intron_after} -p ${cpu} 2> ${map_to_intron_log} | samtools view -bS -F 0x4 -q 10 - > ${map_to_intron}
