@@ -15,7 +15,7 @@ source ${lib_path}/functions.sh
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hva:b:g:c:o:A:B:N:" OPTION; do
+while getopts "hva:b:g:c:o:A:B:N:c" OPTION; do
     case $OPTION in
 	h)usage && exit 0 ;;
 	v)echo2 "SMALLRNA2_VERSION: v$SMALLRNA2_VERSION" && exit 0 ;;
@@ -26,9 +26,15 @@ while getopts "hva:b:g:c:o:A:B:N:" OPTION; do
 	A)export SAMPLE_A_NAME=$OPTARG ;;
 	# B)  export SAMPLE_B_NAME=$OPTARG ;;
 	N)export NORMMETHOD=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
+	c)CPU=$OPTARG ;;
 	*)usage && exit 1 ;;
     esac
 done
+
+# The script is meant to be run in parallel so default CPU is 1
+if [ -z "$CPU" ]; then
+    CPU=1
+fi
 source ${lib_path}/${GENOME}.parameters.sh
 
 # ALL_BED2_A=`ls $SAMPLE_A_DIR/intersect_genomic_features/*${GENOME}*all.x_rpmk_MASK.bed2`
@@ -148,8 +154,16 @@ if [[ ${GENOME} == 'dm3' ]]; then
     # draw piRNA abundance for each construct #
     ###########################################
     # echo2 "Calculating piRNA abundances for each construct"
-    # echo "grep -E 'GSV6|nos-gal4-vp16|UASp-EGFP' ${ALL_BED2_A} | awk -v depth=0.0146698 '{if(\$3-\$2>=23) { total[\$1] = 1; if(\$6==\"+\") {a[\$1] += \$4/\$5} else {b[\$1] += \$4/\$5} } } END{ for(i in total) { print i \"\t\" a[i]*depth \"\t\" b[i]*depth } }' > ${SAMPLE_A_NAME}.construct.abundance.normalized_by_$NORMMETHOD" >> ${PARA_OUT}
+    # echo "grep -E 'GSV6|nos-gal4-vp16|UASp-EGFP' ${ALL_BED2_A} | awk -v depth=depth '{if(\$3-\$2>=23) { total[\$1] = 1; if(\$6==\"+\") {a[\$1] += \$4/\$5} else {b[\$1] += \$4/\$5} } } END{ for(i in total) { print i \"\t\" a[i]*depth \"\t\" b[i]*depth } }' > ${SAMPLE_A_NAME}.construct.abundance.normalized_by_$NORMMETHOD" >> ${PARA_OUT}
 elif [[ ${GENOME} == 'mm10g' ]]; then
+    ##############################################
+    # calculate piRNA abundance for genic mapper #
+    ##############################################
+    gtf=~/data/shared/mm10/gencode.vM4.corrected_chrom_names.gtf
+    bed2=${SAMPLE_A_DIR}/genome_mapping/*.all.piRNA.bed2
+    echo2 "Using this file: $(ls ${bed2})"
+    echo "count_reads_for_gene_ntm.py ${gtf} ${ALL_BED2_A} | awk -v depth=$SAMPLE_A_NORMFACTOR 'BEGIN{OFS=\"\t\"} { \$2=\$2*depth; \$3=\$3*depth; print }' > ${SAMPLE_A_NAME}.gene.abundance.normalized_by_$NORMMETHOD" >> ${PARA_OUT}
+
     ###############################################
     # draw piRNA abundance for each piRNA gene #
     ###############################################
@@ -158,5 +172,24 @@ elif [[ ${GENOME} == 'mm10g' ]]; then
 	echo "Current target:" $target
 	echo "awk '\$3-\$2>=$piRNA_bot' $ALL_BED2_A | ${BEDTOOLS} intersect -split -wo -f 0.99 -a stdin -b ${!target} | awk -v depth=$SAMPLE_A_NORMFACTOR '{if (\$6==\$13) a[\$11]+=\$4/\$NF/\$5; else b[\$11]+=\$4/\$NF/\$5; total[\$11]=1}END{for (c in total) { printf \"%s\t%.2f\t%.2f\n\", c, (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth}}' | awk '{ match(\$1, /^(.+)\.[0-9]+\.[0-9]+\$/, ary); i=ary[1]; a[i] += \$2; b[i] += \$3; total[i]=1 } END{ for(i in total) { s=a[i]?a[i]:0; as=b[i]?b[i]:0; print i \"\t\" s \"\t\" as } }' | sort -k1,1 > ${SAMPLE_A_NAME}.piGenes.${i}.abundance.normalized_by_$NORMMETHOD " >> $PARA_OUT
     done
+
+    ##################################################
+    # transposon piRNA abundance for each piRNA gene #
+    ##################################################
+    
+    # transposon_MM=2 # defined in /home/fuy2/repo/tools/piPipes_aux
+    idx=/data/fuy2/shared/mm10/bowtie_index/mm10.repBase
+    t="repBase"
+    INSERT=${SAMPLE_A_DIR}/input_read_files/*.x_rRNA.x_hairpin.insert
+    PREFIX=${SAMPLE_A_NAME}
+    echo "
+bowtie -r -v ${transposon_MM} -a --best --strata -p $CPU \
+       -S \
+       ${idx} \
+       ${INSERT} 2> ${t}.log | \
+    samtools view -uS -F0x4 - 2>/dev/null | \
+    samtools sort -T ${RANDOM}${RANDOM} -O bam -@ $CPU - | \
+    ~/data/piPipes/bin/bedtools_piPipes bamtobed -i - > ${PREFIX}.${t}.a${transposon_MM}.insert.bed && \
+    ~/data/piPipes/bin/piPipes_insertBed_to_bed2 $x_rRNA_INSERT ${PREFIX}.${t}.a${transposon_MM}.insert.bed > ${PREFIX}.${t}.a${transposon_MM}.insert.bed2 && awk -v depth=${SAMPLE_A_NORMFACTOR} '{ total[\$1]=1; if(\$6==\"+\") { a[\$1] += \$4/\$5 } else { b[\$1] += \$4/\$5 } } END{ for(i in total) { print i \"\t\" a[i]*depth \"\t\" b[i]*depth } }' ${PREFIX}.${t}.a${transposon_MM}.insert.bed2 > ${SAMPLE_A_NAME}.transposon.abundance.normalized_by_$NORMMETHOD" >> ${PARA_OUT}
 fi
     
