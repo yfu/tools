@@ -39,7 +39,7 @@ for read in bam.fetch():
     ds = read.query_sequence[read.query_alignment_end:]
     al = read.query_alignment_sequence
     # Print the mapping and the query information
-    print "\"" + bam.getrname(read.reference_id) + "\"" + ":" + str(read.reference_start) + "-" + str(read.reference_end) + "|" + strand + "|" + read.query_name,    
+    print bam.getrname(read.reference_id) + "|" + str(read.reference_start) + "|" + str(read.reference_end) + "|" + strand + "|" + read.query_name,    
     if sr:
         print us + "\t",
         print al + "\t",

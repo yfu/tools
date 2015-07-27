@@ -190,6 +190,6 @@ bowtie -r -v ${transposon_MM} -a --best --strata -p $CPU \
     samtools view -uS -F0x4 - 2>/dev/null | \
     samtools sort -T ${RANDOM}${RANDOM} -O bam -@ $CPU - | \
     ~/data/piPipes/bin/bedtools_piPipes bamtobed -i - > ${PREFIX}.${t}.a${transposon_MM}.insert.bed && \
-    ~/data/piPipes/bin/piPipes_insertBed_to_bed2 $x_rRNA_INSERT ${PREFIX}.${t}.a${transposon_MM}.insert.bed > ${PREFIX}.${t}.a${transposon_MM}.insert.bed2 && awk -v depth=${SAMPLE_A_NORMFACTOR} '{ total[\$1]=1; if(\$6==\"+\") { a[\$1] += \$4/\$5 } else { b[\$1] += \$4/\$5 } } END{ for(i in total) { print i \"\t\" a[i]*depth \"\t\" b[i]*depth } }' ${PREFIX}.${t}.a${transposon_MM}.insert.bed2 > ${SAMPLE_A_NAME}.transposon.abundance.normalized_by_$NORMMETHOD" >> ${PARA_OUT}
+    ~/data/piPipes/bin/piPipes_insertBed_to_bed2 $INSERT ${PREFIX}.${t}.a${transposon_MM}.insert.bed > ${PREFIX}.${t}.a${transposon_MM}.insert.bed2 && awk -v depth=${SAMPLE_A_NORMFACTOR} '{ total[\$1]=1; if(\$6==\"+\") { a[\$1] += \$4/\$5 } else { b[\$1] += \$4/\$5 } } END{ for(i in total) { print i \"\t\" a[i]*depth \"\t\" b[i]*depth } }' ${PREFIX}.${t}.a${transposon_MM}.insert.bed2 > ${SAMPLE_A_NAME}.transposon.abundance.normalized_by_$NORMMETHOD" >> ${PARA_OUT}
 fi
     
