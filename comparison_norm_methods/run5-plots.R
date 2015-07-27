@@ -1,0 +1,133 @@
+ ## groups <- list(c("SRS.42A18AT1.br1.tr1.ox.ovary", "SRS.42A18AT1.br2.tr1.ox.ovary", "SRS.42A18AT1.br3.tr1.ox.ovary", "SRS.42A18AT1.br4.tr1.ox.ovary"),
+ ##               c("SRS.GS1AT1.br1.tr1.ox.ovary", "SRS.GS1AT1.br2.tr1.ox.ovary", "SRS.GS1AT1.br3.tr1.ox.ovary"),
+ ##               c("SRS.42A18BT1.br1.tr1.ox.ovary", "SRS.42A18BT1.br1.tr2.ox.ovary", "SRS.42A18BT1.br2.tr1.ox.ovary", "SRS.42A18BT1.br3.tr1.ox.ovary"),
+ ##               c("SRS.GS1BT1.br1.tr1.ox.ovary", "SRS.GS1BT1.br2.tr1.ox.ovary", "SRS.GS1BT1.br3.tr1.ox.ovary"),
+ ##               c("SRS.42A18CT1.br1.tr1.ox.ovary", "SRS.42A18CT1.br2.tr1.ox.ovary", "SRS.42A18CT1.br3.tr1.ox.ovary"),
+ ##               c("SRS.GS1CT1.br1.tr1.ox.ovary", "SRS.GS1CT1.br2.tr1.ox.ovary", "SRS.GS1CT1.br3.tr1.ox.ovary", "SRS.GS1CT1.br3.tr2.ox.ovary"))
+
+groups <- list(c("SRS.42A18.F18.br1.tr1.ox.ovary", "SRS.42A18.F18.br2.tr1.ox.ovary", "SRS.42A18.F18.br2.tr2.ox.ovary", "SRS.42A18.F18.br3.tr1.ox.ovary", "SRS.42A18.F1.br1.tr1.ox.ovary", "SRS.42A18.F1.br2.tr1.ox.ovary", "SRS.42A18.F1.br2.tr2.ox.ovary"),
+               c("SRS.42A18.F1.br3.tr1.ox.ovary", "SRS.42A18.F1.br3.tr2.ox.ovary"),
+               c("SRS.42A18HT1.Ago3IP.br1.tr1.ox.ovary", "SRS.42A18HT1.Ago3IP.br1.tr2.ox.ovary"),
+               c("SRS.42A18HT1.AubIP.br1.tr1.ox.ovary", "SRS.42A18HT1.AubIP.br1.tr2.ox.ovary"),
+               c("SRS.42A18HT1.PiwiIP.br1.tr1.ox.ovary", "SRS.42A18HT1.PiwiIP.br1.tr2.ox.ovary"),
+               c("SRS.CC1.Ago3IP.br1.tr1.ox.ovary", "SRS.CC1.Ago3IP.br1.tr2.ox.ovary"),
+               c("SRS.CC1.AubIP.br1.tr1.ox.ovary", "SRS.CC1.AubIP.br1.tr2.ox.ovary"),
+               c("SRS.CC1.PiwiIP.br1.tr1.ox.ovary", "SRS.CC1.PiwiIP.br1.tr2.ox.ovary"),
+               c("SRS.CC3.br1.tr1.ox.ovary", "SRS.CC3.br1.tr2.ox.ovary"),
+               c("SRS.GS1AT1.br1.tr1.ox.ovary", "SRS.GS1AT1.br2.tr1.ox.ovary", "SRS.GS1AT1.br3.tr1.ox.ovary"),
+               c("SRS.GS1BT1.28_31d.br1.tr1.ox.ovary", "SRS.GS1BT1.28_31d.br1.tr2.ox.ovary", "SRS.GS1BT1.28_31d.br2.tr1.ox.ovary", "SRS.GS1BT1.28_31d.br2.tr2.ox.ovary", "SRS.GS1BT1.28_31d.br3.tr1.ox.ovary", "SRS.GS1BT1.28_31d.br3.tr2.ox.ovary"),
+               c("SRS.GS1BT1.br1.tr1.ox.ovary", "SRS.GS1BT1.br2.tr1.ox.ovary", "SRS.GS1BT1.br3.tr1.ox.ovary"),
+               c("SRS.GS1CT1.Ago3IP.br1.tr1.ox.ovary", "SRS.GS1CT1.Ago3IP.br1.tr2.ox.ovary"),
+               c("SRS.GS1CT1.AubIP.br1.tr1.ox.ovary", "SRS.GS1CT1.AubIP.br1.tr2.ox.ovary"),
+               c("SRS.GS1CT1.br1.tr1.ox.ovary", "SRS.GS1CT1.br2.tr1.ox.ovary", "SRS.GS1CT1.br3.tr1.ox.ovary", "SRS.GS1CT1.br3.tr2.ox.ovary"),
+               c("SRS.GS1CT1.PiwiIP.br1.tr1.ox.ovary", "SRS.GS1CT1.PiwiIP.br1.tr2.ox.ovary"),
+               c("SRS.GS1DT1.br1.tr1.ox.ovary", "SRS.GS1DT1.br1.tr2.ox.ovary", "SRS.GS1DT1.br2.tr1.ox.ovary", "SRS.GS1DT1.br3.tr1.ox.ovary"),
+               c("SRS.GS1ET1.br1.tr1.ox.ovary", "SRS.GS1ET1.br2.tr1.ox.ovary", "SRS.GS1ET1.br3.tr1.ox.ovary"),
+               c("SRS.GS1.F18.br1.tr1.ox.ovary", "SRS.GS1.F18.br2.tr1.ox.ovary", "SRS.GS1.F18.br2.tr2.ox.ovary", "SRS.GS1.F18.br3.tr1.ox.ovary"),
+               c("SRS.GS1.F1.br1.tr1.ox.ovary", "SRS.GS1.F1.br2.tr1.ox.ovary", "SRS.GS1.F1.br2.tr2.ox.ovary", "SRS.GS1.F1.br3.tr1.ox.ovary", "SRS.GS1.F1.br3.tr2.ox.ovary", "SRS.GS1FT1.br1.tr1.ox.ovary", "SRS.GS1FT1.br2.tr1.ox.ovary"),
+               c("SRS.GS1FT1.br3.tr1.ox.ovary", "SRS.GS1FT1.br3.tr2.ox.ovary"),
+               c("SRS.GS1GT1.br1.tr1.ox.ovary", "SRS.GS1GT1.br2.tr1.ox.ovary", "SRS.GS1GT1.br3.tr1.ox.ovary"),
+               c("SRS.GS1HT1.Ago3IP.br1.tr1.ox.ovary", "SRS.GS1HT1.Ago3IP.br1.tr2.ox.ovary", "SRS.GS1HT1.AubIP.br1.tr1.ox.ovary", "SRS.GS1HT1.AubIP.br1.tr2.ox.ovary", "SRS.GS1HT1.PiwiIP.br1.tr1.ox.ovary", "SRS.GS1HT1.PiwiIP.br1.tr2.ox.ovary"),
+               c("SRS.GS1JT1.br1.tr1.ox.ovary", "SRS.GS1JT1.br2.tr1.ox.ovary", "SRS.GS1JT1.br3.tr1.ox.ovary", "SRS.GS1JT2.br1.tr1.ox.ovary", "SRS.GS1JT2.br2.tr1.ox.ovary", "SRS.GS1JT2.br3.tr1.ox.ovary", "SRS.GS1JT3.br1.tr1.ox.ovary"),
+               c("SRS.GS1JT3.br2.tr1.ox.ovary", "SRS.GS1JT3.br3.tr1.ox.ovary", "SRS.GS1JT4.br1.tr1.ox.ovary", "SRS.GS1JT4.br2.tr1.ox.ovary", "SRS.GS1JT4.br3.tr1.ox.ovary"),
+               c("SRS.GS1AT1.br1.tr1.ox.ovary", "SRS.GS1AT1.br1.tr1.unox.ovary"),
+               c("SRS.OR.br1.tr1.ox.testes", "SRS.OR.br1.tr1.unox.testes", "SRS.OR.br1.tr2.unox.testes"),
+               c("SRS.XO.br1.tr1.ox.testes", "SRS.XO.br2.tr1.ox.testes", "SRS.XO.br2.tr2.ox.testes", "SRS.XO.br3.tr1.ox.testes", "SRS.XO.br3.tr2.ox.testes", "SRS.XO.br4.tr1.ox.testes", "SRS.XO.br4.tr2.ox.testes"))
+
+err <- list()
+## For every pair of libraries, gn increments by 1
+gn <- 0
+## For every group, gc increments by 1
+gc <- 0
+
+for (libs in groups) {
+    gc = gc + 1
+    df <- data.frame()
+    norm_table <- data.frame()
+    # libs <- c("SRS.GS1CT1.br1.tr1.ox.ovary", "SRS.GS1CT1.br2.tr1.ox.ovary", "SRS.GS1CT1.br3.tr1.ox.ovary", "SRS.GS1CT1.br3.tr2.ox.ovary")
+    for (D in libs) {
+        table <- paste(D, "/", D, ".table", sep="")
+        norm_table_tmp <- read.table(table, sep="\t")
+        colnames(norm_table_tmp) <- c("norm_type", D)
+        if(length(norm_table)==0) {
+            norm_table <- norm_table_tmp
+        } else {
+            norm_table <- merge(norm_table, norm_table_tmp, by="norm_type")
+        }
+        gcr_d <- paste(D, "/", "gene+cluster+repBase", sep="")
+        cluster_count <- read.table( paste(gcr_d, "/", D, ".gene+cluster+repBase.bed2.cluster.count", sep="") )
+        ## cluster_count1$type="cluster"
+        gene_count <- read.table(paste(gcr_d, "/", D, ".gene+cluster+repBase.bed2.gene.count", sep=""))
+        ## gene_count$type="gene"
+        repBase_count <- read.table(paste(gcr_d, "/", D, ".gene+cluster+repBase.bed2.repBase.count", sep=""))
+        ## repBase_count$type="repBase"
+        construct_count <- read.table(paste(gcr_d, "/", D, ".gene+cluster+repBase.bed2.construct.count", sep=""))
+        ## construct_count$type="construct"
+        if( length(df) ==0 ) {
+            df <- rbind(cluster_count, gene_count, repBase_count, construct_count)
+            colnames(df) <- c("feature", D)
+        } else {
+            tmp <- rbind(cluster_count, gene_count, repBase_count, construct_count)
+            colnames(tmp) <- c("feature", D)
+            df <- merge(df, tmp, by="feature")
+        }
+    }
+
+    df.backup <- df
+    
+    idx <- grepl("^NM_|^NR_", df$feature)
+    df$type="x"
+    df$type[idx] <- "gene"
+    idx <- grep("^FBgn", df$feature)
+    df$type[idx] <- "repBase"
+    idx <- grep("^cluster|^42AB|^flam", df$feature)
+    df$type[idx] <- "cluster"
+    idx <- grep("GSV6|nos-gal4-vp16|UASp-EGFP", df$feature)
+    df$type[idx] <- "construct"
+    
+    err.1 <- matrix(nrow=length(libs), ncol=length(libs))
+    rownames(err.1) <- libs
+    colnames(err.1) <- libs
+
+    pdf(paste("group", gc, ".scatter_plots.pdf", sep=""))
+    library(ggplot2)
+    ## for (x in libs) {
+    for (n in norm_table$norm_type) {
+        line <- which(norm_table$norm_type==n)
+        ## for (x in "SRS.GS1CT1.br1.tr1.ox.ovary") {
+        for(x in libs) { 
+            nf1 <- norm_table[line, x]
+            dx <- df[, c(x, "type")]
+            dx[, 1] <- dx[, 1] / nf1 * 1e6
+            for (y in libs) {
+                if (x==y) { next }
+                ## for (y in "SRS.GS1CT1.br2.tr1.ox.ovary") {
+                nf2 <- norm_table[line, y]
+                dy <- df[, c(y, "type")]
+                dy[, 1] <- dy[, 1] / nf2 * 1e6
+                my <- cbind(dx, dy)
+                my.max <- max(rbind(my[, 1], my[, 3]))
+                my.err <- sum(abs(my[, 1] - my[, 3])/my.max)
+                err.1[x, y] <- my.err
+                p <- ggplot(data=my, aes_string(x=x, y=y, color="type")) + geom_point() + geom_abline(intercept = 0, slope = 1) + scale_x_log10() + scale_y_log10() + ggtitle(paste("Normalized to 1 million of ", n, sep=""))
+                print(p)
+            }
+        }
+        gn <- gn + 1
+        err[[gn]] <- err.1
+        names(err)[gn] <- n
+    }
+    dev.off()    
+}
+
+
+library(gplots)
+# Heatmap for all the errors: 0 represents perfect fit for y=x
+pdf("err_yx.pdf")
+for (i in seq(1, length(err))) {
+    e <- err[[i]]
+    e[is.na(e)] = 0
+    my.main <- paste(names(err)[i], "\n0 means y=x is perfit fit")
+    heatmap.2(e, cellnote=round(e, digits=3), main=my.main, cexRow=0.5, cexCol=0.5, srtRow=45, srtCol=45)
+}
+dev.off()
