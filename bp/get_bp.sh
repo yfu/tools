@@ -15,7 +15,7 @@ PREFIX=$(basename $PREFIX)
 # The same with bp.sh
 
 GENOME=hg19
-CPU=16
+CPU=32
 GTF=/data/fuy2/shared/${GENOME}/${GENOME}.gencode.gtf
 GENOME_FA=/data/fuy2/shared/${GENOME}/${GENOME}.fa
 PIPELINE_DIR=~/repo/tools/bp
@@ -154,7 +154,13 @@ bowtie2-build -o 1 ${put_lar_fa} ${put_lar_idx}
 
 map_to_put_lar=${prefix}.map_to_put_lar.bam
 bowtie2 --local -x ${put_lar_idx} -U ${FQ} | samtools view -b -F 0x4 - | samtools sort -@ ${CPU} -T ${RANDOM}${RANDOM} -O bam - > ${map_to_put_lar}
+samtools index ${map_to_put_lar}
 
+# Require alignment to cover the up-/down-stream of branchpoint
+# baa: before, align and after
+map_to_put_lar_baa=${prefix}.map_to_put_lar.baa.tab
+map_to_put_lar_baa_log=${prefix}.map_to_put_lar.baa.log
+python ~/repo/tools/parse_bam/get_before_alignment_after.py -s -f ${map_to_put_lar} >  Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.baa.tab 2>${map_to_put_lar_baa_log}
 
 # By testing, the 3' ends of reads are likely to be junk and I cannot align the full
 # length align+after parts, and thus these are deprecated.
@@ -189,3 +195,5 @@ bowtie2 --local -x ${put_lar_idx} -U ${FQ} | samtools view -b -F 0x4 - | samtool
 # Number of concordant reads (before and align map to the strand strand on the same chromosome)
 # cat Mattick.RNaseR.HeLa.BP.rep1.fq.gz.before+align.map_to_genome.bed | awk '{ if($6==$11 && $2==$7) { print } }' | wc -l
 # wc -l ${f2}
+
+# cat Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.before.align.after.tab | awk '{ if(length($3)>40 && length($2)<80 && length($4)<80) {print $2}}' | awk '{ match($0, /.+(AG|GT)$/, a); if(length(a[1])==0) { print } }' | sort^C uniq | awk '{ if(length($0)>20) { print substr($0, length($0)-10, 10) }}' | awk '{print ">" i++; print $0}' | weblogo -F pdf > test.pdf
