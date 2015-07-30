@@ -10,10 +10,6 @@
 # Bad read:  --------------------------------------------------AMMMMMMMMMMMMMMMMMMMM-----------------------------
 # Bad read:  --------------------MMMMMMMMMMMMMMMMMMMMM-----------------------------------------------------------
 
-# left overhang required
-loh = 10
-roh = 10
-
 import pysam as ps
 from Bio.Seq import Seq
 import sys
@@ -25,6 +21,7 @@ parser.add_argument('-a', '--anchor', help='(1-based) position of the anchor poi
 parser.add_argument('-l', '--left-overlap', help='enforcing length of alignment (matches/mismatches) on the left', required=True, dest="lol", type=int)
 parser.add_argument('-r', '--right-overlap', help='enforcing length of alignment (matches/mismatches) on the right', required=True, dest="rol", type=int)
 parser.add_argument('-f', '--file', help='the input file', required=True)
+# parser.add_argument('-o', '--output', help='the output file', required=True)
 args = parser.parse_args()
 # True: output the sequences on the reference strand
 # False: output the sequences in the orignal direction
@@ -33,14 +30,17 @@ lol = args.lol
 rol = args.rol
 
 infile = args.file
-
 bam = ps.AlignmentFile(infile, "rb")
+# out = ps.AlignmentFile('-', "wb", template=bam)
+out = ps.AlignmentFile('-', "wb", template=bam)
 nas = 0
 ns = 0
 
 def rc(s):
     return str(Seq.reverse_complement(Seq(s)))
 
+def print_sam_line(r):
+    print 
 for read in bam.fetch():
     strand = "s"
     if read.is_reverse:
@@ -50,12 +50,12 @@ for read in bam.fetch():
         ns += 1
     # Left coordinate
     # start index of the aligned query portion of the sequence (0-based, inclusive).
-    lc = read.query_alignment_start
+    lc = read.reference_start
     # end index of the aligned query portion of the sequence (0-based, exclusive)
-    rc = read.query_alignment_end - 1     # (0-based, inclusive)
+    rc = read.reference_end - 1     # (0-based, inclusive)
     # print "%d\t%d" % (lol, rol)
     if ap - lc >= lol and rc - ap >= rol:
-        print str(lc) + "\t" + str(rc)
-    
-    
+        # print str(lc) + "\t" + str(rc) + "\t" + read.cigarstring
+        # print read.tostring(bam)
+        out.write(read)
     # al = read.query_alignment_sequence

@@ -69,7 +69,7 @@ bam_to_bigwig.sh ~/data/shared/hg19/hg19.ChromInfo.txt ${OUTPUT_PREFIX}Aligned.o
 
 input=${PREFIX}.${GENOME}.Unmapped.out.mate1
 prefix=${input%.hg19.Unmapped.out.mate1}
-cpu=16
+cpu=${CPU}
 
 # Keep the original reads or the reverse complements
 # seqtk seq -r ${input} > ${prefix}.hg19.Unmapped.out.mate1.rc
@@ -143,24 +143,54 @@ cat ${f2} | awk -v l=100 '{st=$6; s=$14; e=$15; if(st=="+") { e=s+l } else { s=e
 f2_before_tab=${prefix}.before+align.map_to_genome.f2.before.tab
 f2_align_tab=${prefix}.before+align.map_to_genome.f2.align.tab
 genome_fa=~/data/shared/hg19/hg19.fa
-bedtools getfasta -s -tab -fi ${genome_fa} -bed ${f2_before} -fo - > ${f2_before_tab}
+bedtools getfasta -s -tab -fi ${genome_fa} -bed ${f2_before} -fo - | awk '{ print substr($2, length($2)) "|" $1 "\t" $2 }' > ${f2_before_tab}
 bedtools getfasta -s -tab -fi ${genome_fa} -bed ${f2_align}  -fo - > ${f2_align_tab}
 
 # putative lariat index
 put_lar_fa=${prefix}.put_lar.fa
+put_lar_pdf=${prefix}.put_lar.pdf
 put_lar_idx=${prefix}.put_lar
-paste ${f2_before_tab} ${f2_align_tab} | awk 'BEGIN{i=1} { print ">" $1 "|" $3 "|" i++; print $2 $4; }' > ${put_lar_fa}
+# Only keep the uniq lariat sequence
+paste ${f2_before_tab} ${f2_align_tab} | sort -k1,1 | uniq | awk 'BEGIN{i=1} { print ">" $1 "|" $3 "|" i++; print $2 $4; }' > ${put_lar_fa}
+samtools faidx ${put_lar_fa}
+cat ${put_lar_fa} | weblogo -F pdf > ${put_lar_pdf}
 bowtie2-build -o 1 ${put_lar_fa} ${put_lar_idx}
 
 map_to_put_lar=${prefix}.map_to_put_lar.bam
-bowtie2 --local -x ${put_lar_idx} -U ${FQ} | samtools view -b -F 0x4 - | samtools sort -@ ${CPU} -T ${RANDOM}${RANDOM} -O bam - > ${map_to_put_lar}
+map_to_put_lar_log=${prefix}.map_to_put_lar.log
+# Minimum of 20 nt match
+# Note that multi-mappers should be kept because lariats may have overlaps
+bowtie2 -p ${CPU} --local --score-min L,40,0 -D 20 -R 2 -N 0 -L 20 -i L,1,0 -x ${put_lar_idx} -U ${input} 2> ${map_to_put_lar_log} | samtools view -b -F 0x4 - | samtools sort -@ ${CPU} -T ${RANDOM}${RANDOM} -O bam - > ${map_to_put_lar}
 samtools index ${map_to_put_lar}
 
 # Require alignment to cover the up-/down-stream of branchpoint
 # baa: before, align and after
-map_to_put_lar_baa=${prefix}.map_to_put_lar.baa.tab
-map_to_put_lar_baa_log=${prefix}.map_to_put_lar.baa.log
-python ~/repo/tools/parse_bam/get_before_alignment_after.py -s -f ${map_to_put_lar} >  Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.baa.tab 2>${map_to_put_lar_baa_log}
+# map_to_put_lar_baa=${prefix}.map_to_put_lar.baa.tab
+# map_to_put_lar_baa_log=${prefix}.map_to_put_lar.baa.log
+# python ~/repo/tools/parse_bam/get_before_alignment_after.py -s -f ${map_to_put_lar} > ${map_to_put_lar_baa} 2>${map_to_put_lar_baa_log}
+
+# Visualize the alignment by
+# samtools view Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.csrbp.bam | cut -f3 | awk '{ d[$1]+=1 } END{ for(i in d) { print i "\t" d[i] } }' | sort -k2,2nr | head
+# samtools tview -p 'chr12:56213921-56214021(+)|chr12:56213277-56213377(+)|1733' Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.csrbp.bam Mattick.RNaseR.HeLa.BP.rep1.fq.gz.put_lar.fa
+crsbp=${prefix}.map_to_put_lar.crsbp.bam
+samtools index ${crsbp}
+python ~/repo/tools/parse_bam/filter_ol_bp.py -a 100 -l 5 -r 5 -f ${map_to_put_lar} > ${crsbp}
+crsbp_list=${prefix}.map_to_put_lar.crsbp.list
+samtools view ${crsbp} | awk '{ d[$3]+=1 } END{ for(i in d) { print i "\t" d[i] } }' | sort -k2,2nr > ${crsbp_list}
+
+# crsbp_bcf=${prefix}.map_to_put_lar.crsbp.bcf
+crsbp_bcf_log=${prefix}.map_to_put_lar.crsbp.pileup.log
+crsbp_vcf=${prefix}.map_to_put_lar.crsbp.vcf
+samtools mpileup -d10000000 -u -g -f ${put_lar_fa} ${crsbp} 2> ${crsbp_bcf_log} | bcftools call -A -m - > ${crsbp_vcf}
+freq_prefix=${prefix}.map_to_put_lar.vcf
+vcftools --vcf ${crsbp_vcf} --counts --out ${freq_prefix}
+freq=${freq_prefix}.frq
+
+sub=${prefix}.map_to_put_lar.sub
+python ~/repo/tools/parse_bam/bp_err.py -f ${map_to_put_lar} -r ${put_lar_fa} > ${sub}
+
+# bcftools call -v -m Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.crsbp.raw.bcf | grep -v '^##' | head
+
 
 # By testing, the 3' ends of reads are likely to be junk and I cannot align the full
 # length align+after parts, and thus these are deprecated.
@@ -169,7 +199,6 @@ python ~/repo/tools/parse_bam/get_before_alignment_after.py -s -f ${map_to_put_l
 # bowtie2 -x ${genome_index} -f -U ${align_after} -p ${cpu} 2> ${map_to_genome_align_after_log} | samtools view -bS -F 0x4 -q 10 - | samtools sort -@ ${CPU} -O bam -T - > ${map_to_genome_align_after}
 # map_to_genome_align_after_bed=${prefix}.align+after.map_to_genome.bed
 # bedtools bamtobed -i ${map_to_genome_align_after} | sort -k4,4 >${map_to_genome_align_after_bed}
-
 
 
 # Get the weblogo
