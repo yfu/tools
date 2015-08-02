@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+binpath=$HOME/repo/tools/bp
 ###############################################################################
 # Part 1: mapping reads to the genome and ignore them for downstream analysis #
 ###############################################################################
@@ -15,7 +16,7 @@ PREFIX=$(basename $PREFIX)
 # The same with bp.sh
 
 GENOME=hg19
-CPU=32
+CPU=16
 GTF=/data/fuy2/shared/${GENOME}/${GENOME}.gencode.gtf
 GENOME_FA=/data/fuy2/shared/${GENOME}/${GENOME}.fa
 PIPELINE_DIR=~/repo/tools/bp
@@ -33,32 +34,36 @@ fi
 
 OUTPUT_PREFIX=${PREFIX}.${GENOME}.
 # Set --genomeLoad to NoSharedMemory if you want to run it in the cluster
-STAR \
-    --runMode alignReads \
-    --genomeDir ${COMMON_DIR}/STARIndex \
-    --readFilesIn ${FQ}\
-    ${star_read_file_command} \
-    --runThreadN $CPU \
-    --outFilterScoreMin 0 \
-    --outFilterScoreMinOverLread 0.72 \
-    --outFilterMatchNmin 0 \
-    --outFilterMatchNminOverLread 0.72 \
-    --outFilterMultimapScoreRange 1 \
-    --outFilterMultimapNmax -1 \
-    --outFilterMismatchNmax 10 \
-    --outFilterMismatchNoverLmax 0.05 \
-    --alignIntronMax 0 \
-    --alignIntronMin 21 \
-    --outFilterIntronMotifs None \
-    --genomeLoad NoSharedMemory \
-    --outFileNamePrefix $OUTPUT_PREFIX \
-    --outSAMunmapped None \
-    --outReadsUnmapped Fastx \
-    --outSJfilterReads Unique \
-    --seedSearchStartLmax 20 \
-    --seedSearchStartLmaxOverLread 1.0 \
-    --chimSegmentMin 0 2>&1 1> ${OUTPUT_PREFIX}STAR.log
-
+statusf=.${PREFIX}.regular_mapping.ok
+if [[ -f ${statusf} ]]; then
+    echo "Regular RNA-seq mapping has been done. If you want to redo it, please delete ${statusf}"
+else
+    STAR \
+	--runMode alignReads \
+	--genomeDir ${COMMON_DIR}/STARIndex \
+	--readFilesIn ${FQ}\
+	${star_read_file_command} \
+	--runThreadN $CPU \
+	--outFilterScoreMin 0 \
+	--outFilterScoreMinOverLread 0.72 \
+	--outFilterMatchNmin 0 \
+	--outFilterMatchNminOverLread 0.72 \
+	--outFilterMultimapScoreRange 1 \
+	--outFilterMultimapNmax -1 \
+	--outFilterMismatchNmax 10 \
+	--outFilterMismatchNoverLmax 0.05 \
+	--alignIntronMax 0 \
+	--alignIntronMin 21 \
+	--outFilterIntronMotifs None \
+	--genomeLoad NoSharedMemory \
+	--outFileNamePrefix $OUTPUT_PREFIX \
+	--outSAMunmapped None \
+	--outReadsUnmapped Fastx \
+	--outSJfilterReads Unique \
+	--seedSearchStartLmax 20 \
+	--seedSearchStartLmaxOverLread 1.0 \
+	--chimSegmentMin 0 2>&1 1> ${OUTPUT_PREFIX}STAR.log && touch ${statusf}
+fi
 # Make bigWig files from the regular RNA-seq reads
 # Normalization factor = 1
 bam_to_bigwig.sh ~/data/shared/hg19/hg19.ChromInfo.txt ${OUTPUT_PREFIX}Aligned.out.sam 1
@@ -89,7 +94,13 @@ map_to_5_intron_as=${prefix}.hg19.map_to_5intron.as.sam
 
 log=${prefix}.hg19.map_to_5intron.log
 # Require that MAPQ >= 10
-bowtie2 --local --score-min L,45,0 -D 20 -R 2 -N 0 -L 20 -i L,1,0 --phred33 -p ${cpu} -x ${index_5pintron} -U ${input} 2> ${log} | samtools view -q 10 -bS -F 0x4 - | samtools sort -@ ${cpu} -T ${RANDOM} -O bam > ${map_to_5_intron}
+statusf=.${prefix}.5intron_mapping.ok
+if [[ -f ${statusf} ]]; then
+    echo "5' intron mapping has been done. If you want to redo it, please delete ${statusf}"
+else
+    bowtie2 --local --score-min L,45,0 -D 20 -R 2 -N 0 -L 20 -i L,1,0 --phred33 -p ${cpu} -x ${index_5pintron} -U ${input} 2> ${log} | samtools view -q 10 -bS -F 0x4 - | samtools sort -@ ${cpu} -T ${RANDOM} -O bam > ${map_to_5_intron} && touch ${statusf}
+fi
+    
 samtools index ${map_to_5_intron}
 samtools view -f 16 ${map_to_5_intron} > ${map_to_5_intron_as}
 samtools view -F 16 ${map_to_5_intron} > ${map_to_5_intron_s}
@@ -150,11 +161,12 @@ bedtools getfasta -s -tab -fi ${genome_fa} -bed ${f2_align}  -fo - > ${f2_align_
 put_lar_fa=${prefix}.put_lar.fa
 put_lar_pdf=${prefix}.put_lar.pdf
 put_lar_idx=${prefix}.put_lar
+put_lar_idx_log=${prefix}.put_lar.idx.log
 # Only keep the uniq lariat sequence
 paste ${f2_before_tab} ${f2_align_tab} | sort -k1,1 | uniq | awk 'BEGIN{i=1} { print ">" $1 "|" $3 "|" i++; print $2 $4; }' > ${put_lar_fa}
 samtools faidx ${put_lar_fa}
 cat ${put_lar_fa} | weblogo -F pdf > ${put_lar_pdf}
-bowtie2-build -o 1 ${put_lar_fa} ${put_lar_idx}
+bowtie2-build -o 1 ${put_lar_fa} ${put_lar_idx} &> ${put_lar_idx_log}
 
 map_to_put_lar=${prefix}.map_to_put_lar.bam
 map_to_put_lar_log=${prefix}.map_to_put_lar.log
@@ -173,8 +185,8 @@ samtools index ${map_to_put_lar}
 # samtools view Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.csrbp.bam | cut -f3 | awk '{ d[$1]+=1 } END{ for(i in d) { print i "\t" d[i] } }' | sort -k2,2nr | head
 # samtools tview -p 'chr12:56213921-56214021(+)|chr12:56213277-56213377(+)|1733' Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.csrbp.bam Mattick.RNaseR.HeLa.BP.rep1.fq.gz.put_lar.fa
 crsbp=${prefix}.map_to_put_lar.crsbp.bam
-samtools index ${crsbp}
 python ~/repo/tools/parse_bam/filter_ol_bp.py -a 100 -l 5 -r 5 -f ${map_to_put_lar} > ${crsbp}
+samtools index ${crsbp}
 crsbp_list=${prefix}.map_to_put_lar.crsbp.list
 samtools view ${crsbp} | awk '{ d[$3]+=1 } END{ for(i in d) { print i "\t" d[i] } }' | sort -k2,2nr > ${crsbp_list}
 
@@ -183,14 +195,31 @@ crsbp_bcf_log=${prefix}.map_to_put_lar.crsbp.pileup.log
 crsbp_vcf=${prefix}.map_to_put_lar.crsbp.vcf
 samtools mpileup -d10000000 -u -g -f ${put_lar_fa} ${crsbp} 2> ${crsbp_bcf_log} | bcftools call -A -m - > ${crsbp_vcf}
 freq_prefix=${prefix}.map_to_put_lar.vcf
-vcftools --vcf ${crsbp_vcf} --counts --out ${freq_prefix}
+freq_log=${freq_prefix}.vcftools.log
+vcftools --vcf ${crsbp_vcf} --counts --out ${freq_prefix} &> ${freq_log}
 freq=${freq_prefix}.frq
 
 sub=${prefix}.map_to_put_lar.sub
 python ~/repo/tools/parse_bam/bp_err.py -f ${map_to_put_lar} -r ${put_lar_fa} > ${sub}
 
-# bcftools call -v -m Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.crsbp.raw.bcf | grep -v '^##' | head
+# NOTICE that only lariat supporting reads are considered
+err_rate=${prefix}.map_to_put_lar.error_rate
+grep -v '^#' ${sub} | awk '{ pos=$2; ref=toupper($3); d["A"]=$4; d["C"]=$5; d["G"]=$6; d["T"]=$7; d["N"]=$8; total[pos]+=$4+$5+$6+$7; t=$4+$5+$6+$7; correct=d[ref]; err=t-correct; pos_err[pos]+=err} END{ for(i in pos_err) { print i "\t" total[i] "\t" pos_err[i] } }' > ${err_rate}
 
+final_lar_support=${prefix}.final.lar.support
+final_lar=${prefix}.final.lar.bed
+final_lar_bp=${prefix}.final.lar.bp.bed
+samtools view ${map_to_put_lar} | awk '{ d[$3]+=1 } END{ for(i in d) { print i "\t" d[i] } }' | sort -k2,2nr > ${final_lar_support}
+cat ${final_lar_support} | awk '{ split($0, a, "|"); match(a[2], /(.+):([0-9]+)-([0-9]+)\(([+-])\)/, m); match(a[3], /(.+):([0-9]+)-([0-9]+)\(([+-])\)/, n); print m[1] "\t"  m[2] "\t" m[3] "\t" ++i "\t" $2 "\t" m[4] "\t" n[1] "\t" n[2] "\t" n[3] "\t" n[4] }' > ${final_lar}
+cat ${final_lar} | awk 'BEGIN{OFS="\t"} { if($6=="+") { $2=$3-1; } else { $3=$2+1 }; print $1 "\t" $2 "\t" $3 "\t" $4 "\t" $5 "\t" $6 }' > ${final_lar_bp}
+
+anno_mattick=~/data/bp/shared/Mattick.bp.hg19.bed
+inters=${prefix}.final.lar.bp.closest.bed
+bedtools closest -t first -s -a ${final_lar_bp} -b ${anno_mattick} | sort -k11nr > ${inters}
+stats=${prefix}.final.lar.stat
+${binpath}/get_bp_stats.sh ${prefix} > ${stats}
+
+# bcftools call -v -m Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.crsbp.raw.bcf | grep -v '^##' | head
 
 # By testing, the 3' ends of reads are likely to be junk and I cannot align the full
 # length align+after parts, and thus these are deprecated.
