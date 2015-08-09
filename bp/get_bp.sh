@@ -66,14 +66,22 @@ else
 fi
 # Make bigWig files from the regular RNA-seq reads
 # Normalization factor = 1
-bam_to_bigwig.sh ~/data/shared/hg19/hg19.ChromInfo.txt ${OUTPUT_PREFIX}Aligned.out.sam 1
+
+if [[ $GENOME == "hg19" ]]; then
+    chrominfo=~/data/shared/hg19/hg19.ChromInfo.txt
+    genome_fa=~/data/shared/hg19/hg19.fa
+elif [[ $GENOME == "dm3" ]]; then
+    chrominfo=TODO
+    genome_fa=TODO
+fi
+bam_to_bigwig.sh ${chrominfo} ${OUTPUT_PREFIX}Aligned.out.sam 1
 
 ###########################################################################
 # Part 2: mapping reads to 5' introns to extract useful part of the reads #
 ###########################################################################
 
 input=${PREFIX}.${GENOME}.Unmapped.out.mate1
-prefix=${input%.hg19.Unmapped.out.mate1}
+prefix=${input%.${GENOME}.Unmapped.out.mate1}
 cpu=${CPU}
 
 # Keep the original reads or the reverse complements
@@ -153,7 +161,7 @@ cat ${f2} | awk -v l=100 '{st=$6; s=$14; e=$15; if(st=="+") { e=s+l } else { s=e
 
 f2_before_tab=${prefix}.before+align.map_to_genome.f2.before.tab
 f2_align_tab=${prefix}.before+align.map_to_genome.f2.align.tab
-genome_fa=~/data/shared/hg19/hg19.fa
+
 bedtools getfasta -s -tab -fi ${genome_fa} -bed ${f2_before} -fo - | awk '{ print substr($2, length($2)) "|" $1 "\t" $2 }' > ${f2_before_tab}
 bedtools getfasta -s -tab -fi ${genome_fa} -bed ${f2_align}  -fo - > ${f2_align_tab}
 
@@ -202,22 +210,48 @@ freq=${freq_prefix}.frq
 sub=${prefix}.map_to_put_lar.sub
 python ~/repo/tools/parse_bam/bp_err.py -f ${map_to_put_lar} -r ${put_lar_fa} > ${sub}
 
+# Calculate "mutation" rates at BPs
+sub_mat=${prefix}.map_to_put_lar.sub_mat
+cat ${sub} | awk '{ if($2==100) {print} }' | awk '{ if($2==100) {print} }' | awk '{ r=$3; d[r]["A"]+=$4; d[r]["C"]+=$5; d[r]["G"]+=$6; d[r]["T"]+=$7; d[r]["N"]+=$8  } END{ bases[0]="A"; bases[1]="C"; bases[2]="G"; bases[3]="T"; bases[4]="N"; print "ref\ttoA\ttoC\ttoG\ttoT\ttoN"; for(i=0;i<5;i++) { ii=bases[i]; printf ii "\t"; for(j in bases) { jj=bases[j]; n=d[ii][jj]?d[ii][jj]:0; printf n "\t" }; printf "\n" }}' > ${sub_mat}
+
 # NOTICE that only lariat supporting reads are considered
 err_rate=${prefix}.map_to_put_lar.error_rate
 grep -v '^#' ${sub} | awk '{ pos=$2; ref=toupper($3); d["A"]=$4; d["C"]=$5; d["G"]=$6; d["T"]=$7; d["N"]=$8; total[pos]+=$4+$5+$6+$7; t=$4+$5+$6+$7; correct=d[ref]; err=t-correct; pos_err[pos]+=err} END{ for(i in pos_err) { print i "\t" total[i] "\t" pos_err[i] } }' > ${err_rate}
+${binpath}/plot_bp_error_rate.R ${err_rate} ${err_rate}.pdf
 
 final_lar_support=${prefix}.final.lar.support
 final_lar=${prefix}.final.lar.bed
 final_lar_bp=${prefix}.final.lar.bp.bed
+final_lar_fa=${prefix}.final.lar.fa
 samtools view ${map_to_put_lar} | awk '{ d[$3]+=1 } END{ for(i in d) { print i "\t" d[i] } }' | sort -k2,2nr > ${final_lar_support}
 cat ${final_lar_support} | awk '{ split($0, a, "|"); match(a[2], /(.+):([0-9]+)-([0-9]+)\(([+-])\)/, m); match(a[3], /(.+):([0-9]+)-([0-9]+)\(([+-])\)/, n); print m[1] "\t"  m[2] "\t" m[3] "\t" ++i "\t" $2 "\t" m[4] "\t" n[1] "\t" n[2] "\t" n[3] "\t" n[4] }' > ${final_lar}
+
+paste <(cat ${final_lar} | cut -f1-6 | bedtools getfasta -s -fi ${genome_fa} -bed - -fo - -tab) <(cat ${final_lar} | awk 'BEGIN{ OFS="\t" } { print $7, $8, $9, $4, $5, $6 }' | bedtools getfasta -s -fi ${genome_fa} -bed - -fo - -tab) | awk '{ print ">"$1 "|" $3 ; print $2$4; }' > ${final_lar_fa}
 cat ${final_lar} | awk 'BEGIN{OFS="\t"} { if($6=="+") { $2=$3-1; } else { $3=$2+1 }; print $1 "\t" $2 "\t" $3 "\t" $4 "\t" $5 "\t" $6 }' > ${final_lar_bp}
+
 
 anno_mattick=~/data/bp/shared/Mattick.bp.hg19.bed
 inters=${prefix}.final.lar.bp.closest.bed
 bedtools closest -t first -s -a ${final_lar_bp} -b ${anno_mattick} | sort -k11nr > ${inters}
-stats=${prefix}.final.lar.stat
+stats=${prefix}.final.lar.stats
 ${binpath}/get_bp_stats.sh ${prefix} > ${stats}
+
+# Final lariat seqlogo
+final_lar_seqlogo=${prefix}.final.lar.seqlogo.pdf
+cat ${final_lar_fa} | weblogo -F pdf > ${final_lar_seqlogo}
+meme_input=${prefix}.final.lar.meme_input.fa
+# head -n1000 ${final_lar_fa} | faToTab stdin stdout | awk -v m=100 -v f=20 '{ print ">" $1 "|middle=" m "|flanking=" f; print substr($2, m-f, f*2) }' > ${meme_input}
+final_lar_meme_out=${prefix}.final.lar.meme_out
+meme -dna -minw 5 -mod oops -maxsize 10000000 -nmotifs 5 -w 12 ${final_lar_fa} -oc ${final_lar_meme_out}
+
+# bp-centered sequences
+bp_centered=${prefix}.final.lar.bp_centered.bed
+bp_centered_fa=${prefix}.final.lar.bp_centered.fa
+#TODO: fixed the redundant seq names
+bedtools slop -l 0 -r 100 -s -i ${final_lar} -g ~/data/shared/hg19/hg19.ChromInfo.txt | cut -f1-6 > ${bp_centered}
+bedtools getfasta -s -fi ${genome_fa} -bed ${bp_centered} -fo - > ${bp_centered_fa}
+bp_centered_meme_out=${prefix}.final.lar.bp_centered.meme_out
+meme -dna -minw 5 -mod oops -maxsize 10000000 -nmotifs 5 -w 12 ${bp_centered_fa} -oc ${bp_centered_meme_out}
 
 # bcftools call -v -m Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.crsbp.raw.bcf | grep -v '^##' | head
 
