@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+# Part of BP discovery pipeline
 # Given a bam file (reads are mapped to putative lariats), this script figures out the
 # the mismatch at the branchpoint position.
 

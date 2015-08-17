@@ -93,6 +93,7 @@ cpu=${CPU}
 index_5pintron=~/repo/tools/bp/common/hg19/hg19.gencode.intron.uniq.23nt
 # Whole introns
 index_intron=~/repo/tools/bp/common/hg19/hg19.gencode.intron.uniq
+intron_bed=~/repo/tools/bp/common/hg19/hg19.gencode.intron.uniq.bed
 # prefix=Mattick.CSQ.K562.BP.rep1.1000000
 # input=${prefix}.hg19.Unmapped.out.mate1
 map_to_5_intron=${prefix}.hg19.map_to_5intron.bam
@@ -151,8 +152,9 @@ cat ${map_to_genome_before_align_bed} | awk '{ if($6==$11 && $2==$7) { print } }
 
 # 2nd filter: the before and align part has to be in the same intron
 # It also requires the 'before' and 'align' segments should not be right next to each other
+# AND 'before' should be somewhere after 'align' in the transcript coordinates
 f2=${prefix}.before+align.map_to_genome.f2.bed
-bedtools intersect -f 1.00 -a  ${f1} -b ~/repo/tools/bp/common/hg19/hg19.gencode.intron.uniq.bed -wa -u | awk '{ if($6=="+" && $10!=$14) {print} if($6=="-" &&$9!=$15) {print} }' | sort -k1,1 -k2,2n > ${f2}
+bedtools intersect -f 1.00 -s -a ${f1} -b ~/repo/tools/bp/common/hg19/hg19.gencode.intron.uniq.bed -wa -u | awk '{ if($6=="+" && $10>$14) {print} if($6=="-" &&$15>$9) {print} }' | sort -k1,1 -k2,2n > ${f2}
 
 f2_before=${prefix}.before+align.map_to_genome.f2.before.bed
 f2_align=${prefix}.before+align.map_to_genome.f2.align.bed
@@ -229,7 +231,9 @@ cat ${final_lar_support} | awk '{ split($0, a, "|"); match(a[2], /(.+):([0-9]+)-
 paste <(cat ${final_lar} | cut -f1-6 | bedtools getfasta -s -fi ${genome_fa} -bed - -fo - -tab) <(cat ${final_lar} | awk 'BEGIN{ OFS="\t" } { print $7, $8, $9, $4, $5, $6 }' | bedtools getfasta -s -fi ${genome_fa} -bed - -fo - -tab) | awk '{ print ">"$1 "|" $3 ; print $2$4; }' > ${final_lar_fa}
 cat ${final_lar} | awk 'BEGIN{OFS="\t"} { if($6=="+") { $2=$3-1; } else { $3=$2+1 }; print $1 "\t" $2 "\t" $3 "\t" $4 "\t" $5 "\t" $6 }' > ${final_lar_bp}
 
-
+## This is a sanity check: do all the lariat I have found match exactly the 5' intron?
+## For HeLa.rep1, it is yes.
+## cat Mattick.RNaseR.HeLa.BP.rep1.fq.gz.final.lar.bed | awk 'BEGIN{OFS="\t"} { s=$2<$8?$2:$8; e=$3>$9?$3:$9; print $1, s, e, 0, 0, $6, $0 }' | bedtools intersect -s -a - -b ~/repo/tools/bp/common/hg19/hg19.gencode.intron.uniq.bed -wa -wb | awk '{ bef_s=$8; bef_e=$9; ali_s=$14; ali_e=$15; intron_s=$18; intron_e=$19; if($6=="+" && ali_s==intron_s) { print }; if($6=="-" && ali_e==intron_e) {print} }' | sort -k1,3 -k8,9 -k14,15 -u | wc -l
 anno_mattick=~/data/bp/shared/Mattick.bp.hg19.bed
 inters=${prefix}.final.lar.bp.closest.bed
 bedtools closest -t first -s -a ${final_lar_bp} -b ${anno_mattick} | sort -k11nr > ${inters}
@@ -242,7 +246,7 @@ cat ${final_lar_fa} | weblogo -F pdf > ${final_lar_seqlogo}
 meme_input=${prefix}.final.lar.meme_input.fa
 # head -n1000 ${final_lar_fa} | faToTab stdin stdout | awk -v m=100 -v f=20 '{ print ">" $1 "|middle=" m "|flanking=" f; print substr($2, m-f, f*2) }' > ${meme_input}
 final_lar_meme_out=${prefix}.final.lar.meme_out
-meme -dna -minw 5 -mod oops -maxsize 10000000 -nmotifs 5 -w 12 ${final_lar_fa} -oc ${final_lar_meme_out}
+## meme -dna -minw 5 -mod oops -maxsize 10000000 -nmotifs 5 -w 12 ${final_lar_fa} -oc ${final_lar_meme_out}
 
 # bp-centered sequences
 bp_centered=${prefix}.final.lar.bp_centered.bed
@@ -251,7 +255,42 @@ bp_centered_fa=${prefix}.final.lar.bp_centered.fa
 bedtools slop -l 0 -r 100 -s -i ${final_lar} -g ~/data/shared/hg19/hg19.ChromInfo.txt | cut -f1-6 > ${bp_centered}
 bedtools getfasta -s -fi ${genome_fa} -bed ${bp_centered} -fo - > ${bp_centered_fa}
 bp_centered_meme_out=${prefix}.final.lar.bp_centered.meme_out
-meme -dna -minw 5 -mod oops -maxsize 10000000 -nmotifs 5 -w 12 ${bp_centered_fa} -oc ${bp_centered_meme_out}
+## meme -dna -minw 5 -mod oops -maxsize 10000000 -nmotifs 5 -w 12 ${bp_centered_fa} -oc ${bp_centered_meme_out}
+
+# Beautify the output so that it is consistent with Mattick annotation (except for the fact that Mattick is not following the convention):
+# chr1	91629	92090	ENST00000466430.1.4	1	-	chr1_91661_91662_A
+# plus two more columns: the sequence of the intron, and, conservation score of every base in the intron seperated by commas
+bp_and_intron=${prefix}.final.bp_and_intron
+bp_nt=${prefix}.final.bp.nt
+intron_nt=${prefix}.final.intron.nt
+intron_and_bp=${prefix}.intron_and_bp
+terminator=${prefix}.terminator.bed
+intron_=~/repo/tools/bp/common/hg19/hg19.gencode.intron.uniq
+
+cat ${final_lar} | awk 'BEGIN{OFS="\t"} { s=$2<$8?$2:$8; e=$3>$9?$3:$9; print $1, s, e, 0, 0, $6, $0 }' | bedtools intersect -s -a - -b ${intron_bed} -wa -wb -f 1.0 | awk '{ bef_s=$8; bef_e=$9; ali_s=$14; ali_e=$15; intron_s=$18; intron_e=$19; if($6=="+" && ali_s==intron_s) {print $0 "\t" intron_e-bef_e; }; if($6=="-" && ali_e==intron_e) {print $0 "\t" bef_s-intron_s}}' | cut -f7-12,17-20,23 | sort -k4,4n -k11,11n | awk 'BEGIN{OFS="\t"} { if($6=="+") { $2=$3-1; } else if($6=="-") { $3=$2+1; } print }' > ${bp_and_intron}
+bedtools getfasta -s -bed ${bp_and_intron} -fi ${genome_fa} -fo - -tab > ${bp_nt}
+paste ${bp_and_intron} <(cut -f2 ${bp_nt}) | awk 'BEGIN{OFS="\t"} { print $7,$8,$9,$10, "TBD", $6,$1"_"$2"_"$3"_"$12  }' > ${intron_and_bp}
+# get intron sequence
+bedtools getfasta -s -fi ${genome_fa} -bed ${intron_and_bp} -fo - -tab > ${intron_nt}
+awk 'BEGIN{OFS="\t"} { key=$1"\t"$2"\t"$3"\t"$6; if(NR==FNR){ d[key]+=1 } else { $5=d[key]; print } }' ${intron_and_bp} ${intron_and_bp} > ${terminator}
+
+final_align=${prefix}.final.align.bed
+final_before=${prefix}.final.before.bed
+# These two are determined by get-phylop.sh
+final_align_phylop=${prefix}.final.align.bed.phylop
+final_align_phylop_tab=${prefix}.final.align.bed.phylop.tab
+final_before_phylop=${prefix}.final.before.bed.phylop
+final_before_phylop_tab=${prefix}.final.before.bed.phylop.tab
+final_phylop=${prefix}.final.phylop.tab
+cat ${final_lar} | cut -f7-9 > ${final_align}
+cat ${final_lar} | cut -f1-3 > ${final_before}
+get-phylop.sh ${final_align}
+get-phylop.sh ${final_before}
+
+cut -f4 ${final_before_phylop} | sed 's/,/\t/g' > ${final_before_phylop_tab}
+cut -f4 ${final_align_phylop}  | sed 's/,/\t/g' > ${final_align_phylop_tab}
+paste ${final_before_phylop_tab} ${final_align_phylop_tab} > ${final_phylop}
+
 
 # bcftools call -v -m Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.crsbp.raw.bcf | grep -v '^##' | head
 

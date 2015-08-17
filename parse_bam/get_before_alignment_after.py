@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+# Part of BP discovery pipeline
 # 1st col is before; 2nd column is the aligned part; 3rd column is after
 # By default, the reported sequences are in the same direction of the original reads
 # adding options -s to enforce the output to be on the reference strand, that is, if a

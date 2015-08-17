@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+# Part of BP discovery pipeline
 # Given a bam file, this script will output the files that overlap the branchpoint.
 
 # Usage: python ~/repo/tools/parse_bam/filter_ol_bp.py -a 100 -l 10 -r 10 -f Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.bam
