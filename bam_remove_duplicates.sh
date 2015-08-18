@@ -13,6 +13,7 @@ samtools view -b -f0x400 ${dup_marked} > ${dup}
 samtools view -b -F0x400 ${dup_marked} | samtools sort -@ ${CPU} -T ${RANDOM}${RANDOM} -O bam > ${x_dup}
 
 dup_count_log=${prefix}.dup_count.log
-samtools view ${bam} | wc -l | awk '{ print "total_mapped_reads\t" $1 }' > ${dup_count_log}
-samtools view ${x_dup} | wc -l | awk '{ print "total_mapped_reads_wo_dup\t" $1}' >> ${dup_count_log}
-samtools view ${dup} | wc -l | awk '{ print "dup_reads\t" $1}' >> ${dup_count_log}
+# Note that the same pair of reads shares the same read ID so 'wc -l' will give the correct number
+samtools view ${bam}   | cut -f1 | sort -u --parallel=${CPU} | wc -l | awk '{ print "total_mapped_reads\t" $1 }' > ${dup_count_log}
+samtools view ${x_dup} | cut -f1 | sort -u --parallel=${CPU} | wc -l | awk '{ print "total_mapped_reads_wo_dup\t" $1}' >> ${dup_count_log}
+samtools view ${dup}   | cut -f1 | sort -u --parallel=${CPU} | wc -l | awk '{ print "dup_reads\t" $1}' >> ${dup_count_log}

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-while getopts "hd:i:c:o:g:B:xvLD" OPTION; do
+while getopts "hf:i:g:" OPTION; do
     case $OPTION in
 	h)usage && exit 0 ;;
-	f)raw_count=`readlink -f ${OPTARG}`;; # the directory of pipeline results
+	i)raw_count=`readlink -f ${OPTARG}`;; # the directory of pipeline results
+	f)nf="${OPTARG}";; # the directory of pipeline results
 	g)GENOME=$OPTARG ;;
     esac
 done
