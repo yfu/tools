@@ -139,7 +139,7 @@ def main():
         -f <filename>   file name (required)
         -t <tag>        added to shuffled sequence names
         -s <seed>   random seed; default: %d
-    -c <n>      make <n> shuffled copies of each sequence; default: %d
+        -c <n>      make <n> shuffled copies of each sequence; default: %d
         -h              print this usage message
     """ % (sys.argv[0], seed, copies)
 
