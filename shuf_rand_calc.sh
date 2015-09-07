@@ -14,7 +14,14 @@ genome_fa=~/data/shared/mm10/mm10.fa
 #### Upregulated genes
 
 echo "# Part 1: Score for the input sequence"
-jellyfish query ${jfdb} -s ${seq} | awk '{ s+=$2 } END{ print "uniq_sequence\t" s }' > ${scores}
+jellyfish query ${jfdb} -s ${seq} | awk '{ s+=$2 } END{ print "orig_sequence\t" s }' > ${scores}
+
+# Note that fastx_reverse_complement does not support lowercase letters
+seq_rc=${prefix}.rc.fa
+faToTab small.fa stdout 2>/dev/null | awk '{ print ">" $1; print toupper($2) }' > ${seq_rc}.tmp
+
+fastx_reverse_complement -i ${seq_rc}.tmp > ${seq_rc} && rm ${seq_rc}.tmp
+jellyfish query ${jfdb} -s ${seq_rc} | awk '{ s+=$2 } END{ print "rc_orig_sequence\t" s }' >> ${scores}
 
 echo "# Part 2: Shuffled input sequence"
 # Get the # bases
@@ -24,11 +31,15 @@ cmd_2=${prefix}.step2.${RANDOM}${RANDOM}.cmd
 for i in $(seq 1 ${iter}); do
     echo "fasta-dinucleotide-shuffle.py -f ${seq} -s ${RANDOM} 2>/dev/null > ${prefix}.shuffled.${i}.tmp.fa" >> ${cmd_1}
     echo "jellyfish query ${jfdb} -s ${prefix}.shuffled.${i}.tmp.fa | awk '{ s+=\$2 } END{ print s }' > ${prefix}.shuffled.${i}.tmp.score" >> ${cmd_2}
+
+    echo "fasta-dinucleotide-shuffle.py -f ${seq_rc} -s ${RANDOM} 2>/dev/null > ${prefix}.rc.shuffled.${i}.tmp.fa" >> ${cmd_1}
+    echo "jellyfish query ${jfdb} -s ${prefix}.rc.shuffled.${i}.tmp.fa | awk '{ s+=\$2 } END{ print s }' > ${prefix}.rc.shuffled.${i}.tmp.score" >> ${cmd_2}
 done
 cat ${cmd_1} | parallel --progress -j 64
 cat ${cmd_2} | parallel --progress -j 64
 for i in $(seq 1 ${iter}); do
     cat ${prefix}.shuffled.${i}.tmp.score | awk -v i=${i} '{ print "shuffled_" i "\t" $1 }' >> ${scores}
+    cat ${prefix}.rc.shuffled.${i}.tmp.score | awk -v i=${i} '{ print "rc_shuffled_" i "\t" $1 }' >> ${scores}    
 done
 
 echo "# Part 3: Random regions of the same size"
