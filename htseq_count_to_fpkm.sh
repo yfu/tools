@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-while getopts "hf:i:g:" OPTION; do
+while getopts "hf:i:u:a:g:" OPTION; do
     case $OPTION in
 	h)usage && exit 0 ;;
 	i)raw_count=`readlink -f ${OPTARG}`;; # the directory of pipeline results
-	f)nf="${OPTARG}";; # the directory of pipeline results
+	u)nf_uniq="${OPTARG}";; # normalization factor based on # unique mappers
+	a)nf_all="${OPTARG}";; # nf based on # all mappers	
 	g)GENOME=$OPTARG ;;
     esac
 done
@@ -21,4 +22,4 @@ fi
 # GTF=/home/fuy2/data/shared/mm10/mm10.test10000.gtf
 
 count=${raw_count}.naive_counting
-grep -v '^__' ${raw_count} | awk -v nf=${nf} 'BEGIN{print "# gene\traw\tppm\tfpkm\tmed_len"} { if(FNR==NR) { l[$1]=$2 } else { print $1 "\t" $2 "\t" $2*nf "\t" $2*nf/l[$1]*1000 "\t" l[$1] } }' ${med_len} - > ${count}
+grep -v '^__' ${raw_count} | awk -v nf_uniq=${nf_uniq} -v nf_all=${nf_all} 'BEGIN{print "# gene\traw\tppm_uniq\tppm_all\tfpkm_uniq\tfpkm_all\tmed_len"} { if(FNR==NR) { l[$1]=$2 } else { print $1 "\t" $2 "\t" $2*nf_uniq "\t" $2*nf_all "\t" $2*nf_uniq/l[$1]*1000 "\t" $2*nf_all/l[$1]*1000 "\t" l[$1] } }' ${med_len} - > ${count}
