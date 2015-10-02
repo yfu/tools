@@ -7,7 +7,7 @@ library(ggplot2)
 
 args <- commandArgs(TRUE)
 fn <- args[1]
-output <- args[2]
+output <- paste(fn, ".pdf", sep="")
 
 ## fn <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/Hi5.nodavirus.unox.pps"
 ## output <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/test.pdf"
@@ -39,11 +39,13 @@ pps_plot <- function(a) {
         p <- ggplot()
         p <- p + geom_point(aes(x=V1, y=V2), data=pos) + geom_line(aes(x=V1, y=V2), data=pos)
         p <- p + geom_point(aes(x=V1, y=V2), data=neg) + geom_line(aes(x=V1, y=V2), data=neg)
-        p <- p + xlab("# nucleotide overlap (10 means 10-nt overlap)") + ylab("raw signal") + ggtitle(my.title) + geom_vline(xintercept = 0, color="gray")
-        print(p)
+        p1 <- p + xlab("# nucleotide overlap (10 means 10-nt overlap)") + ylab("raw signal") + ggtitle(my.title) + geom_vline(xintercept = 0, color="gray")
+        p2 <- p1 + scale_y_log10()
+        print(p1)
+        print(p2)
         dev.off()
     } else {
-        write("Wrong format: I want a two-column table from pps_simple.py", stderr())
+        write("Wrong format: a two-column table from pps_simple.py is expected", stderr())
     }
 }
 

@@ -16,10 +16,8 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import lil_matrix
 import sys
 from multiprocessing import Process, Queue
-# Load the bed2 file as a
-# Load a ChromeInfo file to set up the numpy array
-BLOCK = 10000
-#     q.put( d1(s, rang, flag) )
+
+BLOCK = 1000000
 
 def d2(sa, sb, rang):
     '''d2 calculates distances between sa and sb within the range defined by rang. Named d2 because it accepts two matrices...
@@ -32,21 +30,23 @@ def d2(sa, sb, rang):
         cur = sa[i, 0]
         count += 1
         if(count % BLOCK == 0):
-            print "Processing signals: " + str(count)
+            print >>sys.stderr, "Processing signals: " + str(count)
         # Signals on the other bed2 file
+        if cur == 0:
+            continue
         for j in range(-rang, rang+1):
             # Find signal on the different strand
             try:
                 ret[j] += sb[i+j, 0] * cur
             except IndexError:
-                print >>sys.stderr, "Encounter choromosome boundaries"
-                # pass
+                # print >>sys.stderr, "Encounter choromosome boundaries"
+                pass
     return ret
         
-def d2_worker(sa, sb, rang, q):
-    '''Just a wrapper around d2
-'''
-    q.put( d2(sa, sb, rang) )
+# def d2_worker(sa, sb, rang, q):
+#     '''Just a wrapper around d2
+# '''
+#     q.put( d2(sa, sb, rang) )
 
 def bed2_reader(fn, s):
     '''Just a bed2 reader that reads in a bed2 file and output the np matrix'''
@@ -59,9 +59,9 @@ def bed2_reader(fn, s):
         chrom, start, end, copy, ntm, strand, seq = line.split()
         start = int(start)
         end = int(end)
-        copy = int(copy)
-        ntm = int(ntm)
-        cur_sig = float(copy)/ntm
+        copy = float(copy)
+        ntm = float(ntm)
+        cur_sig = copy/ntm
         s[chrom][start, 0] += cur_sig
     
 

@@ -1,0 +1,4 @@
+chr2LHet	368872
+chr2RHet	3288761
+chr3LHet	2555491
+chr3RHet	2517507
