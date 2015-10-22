@@ -85,7 +85,7 @@ for read in bam.fetch():
         else:
             seq_sup[ref_name].append(read_seq)        
     # al = read.query_alignment_sequence
-print >> sys.stderr, "lariat" + "\t" + "read" + "species"
+# print >> sys.stderr, "lariat" + "\t" + "read" + "\t" + "species"
 for i in readname_sup:
     s1 = set(readname_sup[i])
     s2 = set(seq_sup[i])
