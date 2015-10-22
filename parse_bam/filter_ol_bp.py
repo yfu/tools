@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 
+# Part of BP discovery pipeline
 # Given a bam file, this script will output the files that overlap the branchpoint.
+# It will also output the lariat support stats into stderr
+# This script will also output the type of support of each lariat-supporting read
+# File format for lariat support:
+# read_name	is_perfect_reads	is_read_0mm_at_bp	#reads_mm_at_bp	#reads
 
-# Usage: python ~/repo/tools/parse_bam/filter_ol_bp.py -a 100 -l 10 -r 10 -f Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.bam
+# Usage: python ~/repo/tools/parse_bam/filter_ol_bp.py -a 100 -l 10 -r 10 -f Mattick.RNaseR.HeLa.BP.rep1.fq.gz.map_to_put_lar.bam > good.bam 2>lariat_support.stats
 #
 # Lariat:    --------------------------------------------------A-------------------------------------------------
 # Good read: -------------------------------------MMMMMMMMMMMMMAMMMMMMMMMMMMM------------------------------------
@@ -36,12 +41,24 @@ out = ps.AlignmentFile('-', "wb", template=bam)
 nas = 0
 ns = 0
 
+# names of each supporting reads
+readname_sup = {}
+# seq
+seq_sup = {}
+for r in bam.references:
+    readname_sup[r] = []
+    seq_sup[r] = []
+
 def rc(s):
     return str(Seq.reverse_complement(Seq(s)))
 
 def print_sam_line(r):
     print 
 for read in bam.fetch():
+    ref_name = bam.getrname(read.reference_id)
+    read_name = read.query_name
+    read_seq = read.seq
+        
     strand = "s"
     if read.is_reverse:
         nas += 1
@@ -58,4 +75,21 @@ for read in bam.fetch():
         # print str(lc) + "\t" + str(rc) + "\t" + read.cigarstring
         # print read.tostring(bam)
         out.write(read)
+        # Record the names and sequences of the lariat supporting reads
+        if ref_name not in readname_sup:
+            readname_sup[ref_name] = [read_name, ]
+        else:
+            readname_sup[ref_name].append(read_name)
+        if ref_name not in seq_sup:
+            seq_sup[ref_name] = [read_seq, ]
+        else:
+            seq_sup[ref_name].append(read_seq)        
     # al = read.query_alignment_sequence
+print >> sys.stderr, "lariat" + "\t" + "read" + "species"
+for i in readname_sup:
+    s1 = set(readname_sup[i])
+    s2 = set(seq_sup[i])
+    print >> sys.stderr, i + "\t" + str(len(s1)) + "\t" + str(len(s2))
+# r = 'A|chr9:86590672-86590772(-)|chr9:86591809-86591909(-)|111'
+# print >>sys.stderr, readname_sup[r]
+# print >>sys.stderr, seq_sup[r]
