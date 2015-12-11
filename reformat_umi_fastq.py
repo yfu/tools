@@ -11,8 +11,11 @@ def process_read(r_name, r_seq, r_info, r_qual, mate, stats):
     ret_seq = ""
     ret_info = ""
     ret_qual = ""
+    ret_bc = ""
     if DEBUG == True:
-        print '-' * 80            
+        print '-' * 80
+        print mate
+        print r_name
         print "Original qual:\t" + r_qual
         print "Original read:\t" + r_seq
         print "Locator:\t" + ' ' * 5 + r_seq[umi_len : umi_len + umi_locator_len]
@@ -27,11 +30,15 @@ def process_read(r_name, r_seq, r_info, r_qual, mate, stats):
                 if is_good_phred(my_umi_qual, qc):
                     my_seq = r_seq[umi_len + umi_locator_len + umi_downstream_len: ]
                     stats[mate]["n_good_reads"] += 1
-                    
-                    ret_name = get_header_with_umi(r_name, my_umi)
+                    # I do not modify read name here,
+                    # since we need to store barcodes from both reads and put the
+                    # concatenated barcode into both reads to make downstream analysis easier
+                    # ret_name = get_header_with_umi(r_name, my_umi)
+                    ret_name = r_name
                     ret_seq =  my_seq
                     ret_info = r_info
                     ret_qual = r_qual[umi_len + umi_locator_len + umi_downstream_len: ]
+                    ret_bc = my_umi
                 else:
                     stats[mate]["n_bad_quality_umi"] += 1
                     if DEBUG:
@@ -48,7 +55,7 @@ def process_read(r_name, r_seq, r_info, r_qual, mate, stats):
         if DEBUG == True:
             print "*Found one without locator:\t" + r_seq
         stats[mate]["n_without_locator"] += 1
-    return ret_name, ret_seq, ret_info, ret_qual
+    return ret_name, ret_seq, ret_info, ret_qual, ret_bc
 
 def get_header_with_umi(header, umi):
     """This function inserts a UMI after the '@' symbol, making the downstream analysis easier
@@ -140,13 +147,15 @@ while True:
     else:
         r1_qual = f1.readline().strip()
         r2_qual = f2.readline().strip()
-        r1_name_proc, r1_seq_proc, r1_info_proc, r1_qual_proc = process_read(r1_name, r1_seq, r1_info, r1_qual, "r1", stats)
-        r2_name_proc, r2_seq_proc, r2_info_proc, r2_qual_proc = process_read(r2_name, r2_seq, r2_info, r2_qual, "r2", stats)
+        r1_name_proc, r1_seq_proc, r1_info_proc, r1_qual_proc, r1_bc = process_read(r1_name, r1_seq, r1_info, r1_qual, "r1", stats)
+        r2_name_proc, r2_seq_proc, r2_info_proc, r2_qual_proc, r2_bc = process_read(r2_name, r2_seq, r2_info, r2_qual, "r2", stats)
         # print "#" + r1_name_proc + "#" + str(r1_name_proc == "") + "#" + str(r2_name_proc=="")
         # print "#" + r2_name_proc
         if (r1_name_proc == "" and r2_name_proc != "") or (r2_name_proc == "" and r1_name_proc != ""):
             n_additional_drop_due_to_mate += 1
         elif r1_name_proc != "" and r2_name_proc != "":
+            r1_name_proc = get_header_with_umi(r1_name_proc, r1_bc + r2_bc)
+            r2_name_proc = get_header_with_umi(r2_name_proc, r1_bc + r2_bc)            
             n_proper_pair += 1
             print >>out1, r1_name_proc
             print >>out1, r1_seq_proc

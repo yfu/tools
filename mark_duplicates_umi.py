@@ -9,11 +9,13 @@ DEBUG = False
 # It will go through the bam file and search for r1 reads that align to the same
 # position and 
 import pysam as ps
-from Bio.Seq import Seq
+# from Bio.Seq import Seq
 import sys
 import argparse
 import sys
 from multiprocessing import Process, Queue, Pool
+import time
+start_time = time.time()
 
 # Two cases:
 # ------------------------->
@@ -51,6 +53,9 @@ infile = args.file
 # readlength = args.read_length
 DEBUG = args.debug
 
+# for kernprof
+# kernprof -l -v ~/repo/tools/mark_duplicates_umi.py -f test300000.sorted.bam
+# @profile
 def mark_duplicates(infile, chromosome):
     bam = ps.AlignmentFile(infile, "rb")
     out = ps.AlignmentFile(infile + "." + chromosome + ".bam", "wb", template=bam)
@@ -63,17 +68,17 @@ def mark_duplicates(infile, chromosome):
     # posbc = {}
     c = 0
     # Unique read IDs: read5 + barcode + template length
-    r1fwd_ids = []
-    r2fwd_ids = []
+    r1fwd_ids = {}
+    r2fwd_ids = {}
     # Stores the reads to be marked as duplicates (only the 2nd and later ones are marked; the first one is not)
-    r1fwd_dup = []
-    r2fwd_dup = []
+    r1fwd_dup = {}
+    r2fwd_dup = {}
     for read in bam.fetch(reference=chromosome):
         c += 1
         if c % 100000 == 0:
             print >>sys.stderr, "Processed " + str(c) + " entries..."
         read_n = read.query_name
-        read_bc = read_n.split("_")[0]
+        read_bc = read_n.split("_")[1]
         read_chr = read.reference_id
         read5 = read.reference_start
         if DEBUG:
@@ -83,27 +88,34 @@ def mark_duplicates(infile, chromosome):
             print >>sys.stderr, "read_info: Read: " + str(read)        
         if not read.is_reverse and read.is_read1:
             read_id = str(read5) + read_bc + str(read.template_length)
+            # read_id = (read5, read_bc, read.template_length)            
             if DEBUG:
                 print >>sys.stderr, read_id + "\t" + str(read)
             if read_id in r1fwd_ids:
                 if DEBUG:
                     print >>sys.stderr, "Found a duplicate (r1fwd): " + str(read)
-                r1fwd_dup.append(read_n)
+                # r1fwd_dup.append(read_n)
+                r1fwd_dup[read_n] = 0
             else:
-                r1fwd_ids.append(read_id)
+                # r1fwd_ids.append(read_id)
+                r1fwd_ids[read_n] = 0
         elif not read.is_reverse and read.is_read2:
             # for a read that maps to the reverse strand, the read.template_length is still positive (not like those in the
             # bam file)
             # read_id = str(read5) + read_bc + str(-read.template_length)
+            # read_id = str(read5) + read_bc + str(read.template_length)
+            # read_id = (read5, read_bc, read.template_length)
             read_id = str(read5) + read_bc + str(read.template_length)
             if DEBUG:
                 print >>sys.stderr, read_id + "\t" + str(read)
             if read_id in r2fwd_ids:
                 if DEBUG:
                     print >>sys.stderr, read_n, "Found a duplicate (r2fwd)" + str(read)
-                r2fwd_dup.append(read_n)
+                # r2fwd_dup.append(read_n)
+                r2fwd_dup[read_n] = 0
             else:
-                r2fwd_ids.append(read_id)
+                # r2fwd_ids.append(read_id)
+                r2fwd_ids[read_id] = 0
     bam.close()
     # print >>sys.stderr, r1fwd_ids
     # print >>sys.stderr, r1fwd_dup
@@ -132,4 +144,6 @@ if __name__ == "__main__":
     p = Pool(processes)
     # Goddamned Pool does not accept lambda functions!
     p.map(mark_duplicates_worker, refs)
+    # mark_duplicates_worker("chr10")
+    print("--- %s seconds ---" % (time.time() - start_time))
     
