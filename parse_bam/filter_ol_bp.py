@@ -70,8 +70,10 @@ for read in bam.fetch():
     lc = read.reference_start
     # end index of the aligned query portion of the sequence (0-based, exclusive)
     rc = read.reference_end - 1     # (0-based, inclusive)
-    # print "%d\t%d" % (lol, rol)
-    if ap - lc >= lol and rc - ap >= rol:
+    ## print >>sys.stderr, "%d\t%d" % (lol, rol)
+    ## print >>sys.stderr, "%d\t%d" % (lc, rc)
+    
+    if ap - lc + 1 >= lol and rc - ap >= rol:
         # print str(lc) + "\t" + str(rc) + "\t" + read.cigarstring
         # print read.tostring(bam)
         out.write(read)
