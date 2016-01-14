@@ -11,9 +11,9 @@
 
 # Global variable to set how wide the range should be. e.g. if you wants to analyze -50 to +50 Ping-Pong, set it to 50.
 # 0 means there is exactly 1nt overlap
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import lil_matrix
+# from scipy.sparse import csc_matrix
+# from scipy.sparse import csr_matrix
+# from scipy.sparse import lil_matrix
 import sys
 from multiprocessing import Process, Queue
 

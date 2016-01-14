@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# Just a wrapper around gppc_internal.py
 # Separate a given bed2 file, such that
 # a. the first bed2 file contains signals on the Watson strand and only records the 5' position of reads
 # b. the second bed2 file contains signals on the Crick strand and only records the 5' position of reads

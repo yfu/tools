@@ -5,9 +5,9 @@ from gppc_core import d2
 from gppc_core import bed2_reader
 import sys
 import numpy as np
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import lil_matrix
+# from scipy.sparse import csc_matrix
+# from scipy.sparse import csr_matrix
+# from scipy.sparse import lil_matrix
 from multiprocessing import Process, Queue, Pool
 import argparse
 DEBUG = False
