@@ -11,7 +11,8 @@ HTSEQ_MODE=intersection-strict
 GTF=$1
 BAM=$(readlink -e $2)
 # PREFIX=$(basename ${BAM%.bam})
-PREFIX=${BAM%.bam}
+# PREFIX=${BAM%.bam}
+PREFIX=$(basename ${BAM%.bam})
 # Sorted by name required by htseq-count
 BAM_SORTED=${PREFIX}.sorted_by_name.bam
 STATUS_SORT_F=${PREFIX}.sorted_by_name.ok
