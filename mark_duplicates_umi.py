@@ -6,8 +6,8 @@ DEBUG = False
 # A FASTQ file is first processed by reformat_umi_fastq.py to put the
 # barcode info in the fasta header. Then it is aligned by aligner such as
 # STAR. The bam file can then be processed by this script.
-# It will go through the bam file and search for r1 reads that align to the same
-# position and 
+# It will go through the bam file and search for inserts that align to the same
+# position and use UMI to mark all but one bam records as PCR duplicates
 import pysam as ps
 # from Bio.Seq import Seq
 import sys
@@ -34,13 +34,13 @@ start_time = time.time()
 # For a sorted bam file, in case 1, the 5' end of r1 and template length can determine the template;
 # in case 2, the 5' end of r2 and template length can determine the template
 # 
-
-parser = argparse.ArgumentParser(description='A pair of FASTQ files are first reformatted using reformat_umi_fastq.py and then is aligned to get the bam file. This script can parse the umi barcode in the name of each read to mark duplicates. You need to first sort the bam file by name and add the FM tag using -a option. Then run it without -a option to mark the duplicates. You need to tell which chromosome you want to process so that you can parallelize this script.')
+parser = argparse.ArgumentParser(description='A pair of FASTQ files are first reformatted using reformat_umi_fastq.py and then is aligned to get the bam file. This script can parse the umi barcode in the name of each read to mark duplicates.')
 parser.add_argument('-f', '--file', help='the input bam file', required=True)
 parser.add_argument('-p', '--processes', help='number of processes', required=False, type=int, default=8)
 # parser.add_argument('-c', '--chromosome', help='the chromosome that you want to process', required=True)
 # parser.add_argument('-a', '--add-tag', help='add a FM (five prime end of the mate) tag as the preprocessing step', action="store_true")
 parser.add_argument('-d', '--debug', help='turn on debug mode', action="store_true")
+parser.add_argument('-c', '--count', help='Count the number of raw reads for each locus (determined by pairs)', action="store_true")
 # parser.add_argument('-l', '--read-length', help='if read length is given, it can be used to more accurately mark duplicates', type=int, default=-1)
 # parser.add_argument('-o', '--output', help='the output file', required=True)
 args = parser.parse_args()
@@ -51,6 +51,7 @@ global infile
 infile = args.file
 # bam = ps.AlignmentFile(infile, "rb")
 # readlength = args.read_length
+count_loc_flag = args.count
 DEBUG = args.debug
 
 # for kernprof
@@ -62,11 +63,11 @@ def mark_duplicates(infile, chromosome):
     print >>sys.stderr, "Processing chromosome: " + chromosome
     r1fwd = -1
     r2fwd = -1
-    # 
-    # dup_read_names = []
-    # # Position + barcode as the key; count as the value
-    # posbc = {}
-    c = 0
+    if count_loc_flag == True:
+        # read5 + barcode + template length as the key
+        counts_loc = {}
+        out_counts_loc = open(infile + "." + chromosome + ".loc_count", "w")
+    c = 0    
     # Unique read IDs: read5 + barcode + template length
     r1fwd_ids = {}
     r2fwd_ids = {}
@@ -88,6 +89,12 @@ def mark_duplicates(infile, chromosome):
             print >>sys.stderr, "read_info: Read: " + str(read)        
         if not read.is_reverse and read.is_read1:
             read_id = str(read5) + read_bc + str(read.template_length)
+            if count_loc_flag == True:
+                locus_id = str(read5) + "," + str(read.template_length)
+                if locus_id in counts_loc:
+                    counts_loc[locus_id] += 1
+                else:
+                    counts_loc[locus_id] = 1
             # read_id = (read5, read_bc, read.template_length)            
             if DEBUG:
                 print >>sys.stderr, read_id + "\t" + str(read)
@@ -106,6 +113,12 @@ def mark_duplicates(infile, chromosome):
             # read_id = str(read5) + read_bc + str(read.template_length)
             # read_id = (read5, read_bc, read.template_length)
             read_id = str(read5) + read_bc + str(read.template_length)
+            if count_loc_flag == True:
+                locus_id = str(read5) + "," + str(read.template_length)
+                if locus_id in counts_loc:
+                    counts_loc[locus_id] +=1
+                else:
+                    counts_loc[locus_id] = 1
             if DEBUG:
                 print >>sys.stderr, read_id + "\t" + str(read)
             if read_id in r2fwd_ids:
@@ -131,6 +144,9 @@ def mark_duplicates(infile, chromosome):
         out.write(read)
     bam.close()
     out.close()
+    if count_loc_flag:
+        for locus_id in counts_loc:
+            print >>out_counts_loc, chromosome + "\t" + locus_id + "\t" + str(counts_loc[locus_id])
 
 def mark_duplicates_worker(chromosome):
     mark_duplicates(infile, chromosome)
