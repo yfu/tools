@@ -2,12 +2,23 @@
 
 ## Read as input the table from pps_simple.py and output a PDF file
 ## Keep in mind that in the input, i=9 means 10nt overlap
+## Usage: pps_plot.R test.bed2.pp_hist 0 29 (use signals at [0, 29] except for the 9th position as the background)
+## Usage: pps_plot.R test.bed2.pp_hist (use everything except for the 9th position as the background
 
 library(ggplot2)
 
 args <- commandArgs(TRUE)
 fn <- args[1]
 output <- paste(fn, ".pdf", sep="")
+if(length(args)==3) {
+    bg.start <- as.numeric(args[2])
+    bg.end <- as.numeric(args[3])
+    sprintf("Using [%d, %d] except for the 9th position as the background!", bg.start, bg.end)
+} else {
+    bg.start <- -Inf
+    bg.end <- Inf
+    sprintf("Using all signals except for the 9th position as the background", bg.start, bg.end)
+}
 # output <- args[2]
 ## fn <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/Hi5.nodavirus.unox.pps"
 ## output <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/test.pdf"
@@ -25,7 +36,6 @@ pps_plot <- function(a) {
         ## 19	344
         ## 20	231
         ## 21	210
-
         a$color = "0"
         a$color[ a$V1 %%  5 == 0 ] = "5"
         a$color[ a$V1 %% 10 == 0 ] = "10"
@@ -33,7 +43,9 @@ pps_plot <- function(a) {
         pdf(output)
         idx <- a$V1==9
         tenth <- a[idx, 2]
-        others <- a[!idx, 2]
+        idx2 <- a$V1 != 9 & a$V1 >= bg.start & a$V1 <= bg.end
+        ## print( a[idx2, ] )
+        others <- a[idx2, 2]
         mean.others <- mean(others)
         sd.others <- sd(others)
         zscore <- (tenth - mean.others) / sd.others
