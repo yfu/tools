@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Usage: python mark_duplicates_umi.py -f test.sorted.bam >test.dup_marked.bam 2>test.dup_marked.log
+# Usage: python umi_loci_with_duplicates.py -f test.sorted.bam 2>test.dup_marked.log
 
 DEBUG = False
 # A FASTQ file is first processed by reformat_umi_fastq.py to put the
@@ -45,28 +45,26 @@ parser.add_argument('-c', '--count', help='Count the number of raw reads for eac
 # parser.add_argument('-o', '--output', help='the output file', required=True)
 args = parser.parse_args()
 processes = args.processes
-# True: output the sequences on the reference strand
-# False: output the sequences in the orignal direction
 global infile
 infile = args.file
-# bam = ps.AlignmentFile(infile, "rb")
-# readlength = args.read_length
 count_loc_flag = args.count
 DEBUG = args.debug
 
 # for kernprof
 # kernprof -l -v ~/repo/tools/mark_duplicates_umi.py -f test300000.sorted.bam
 # @profile
-def mark_duplicates(infile, chromosome):
+def find_loci_with_duplicates(infile, chromosome):
     bam = ps.AlignmentFile(infile, "rb")
     out = ps.AlignmentFile(infile + "." + chromosome + ".bam", "wb", template=bam)
     print >>sys.stderr, "Processing chromosome: " + chromosome
     r1fwd = -1
     r2fwd = -1
-    if count_loc_flag == True:
-        # read5 + barcode + template length as the key
-        counts_loc = {}
-        out_counts_loc = open(infile + "." + chromosome + ".loc_count", "w")
+    # read5 + template length as the key
+    counts_loc = {}
+    out_counts_loc = open(infile + "." + chromosome + ".loc_count", "w")    
+    # read5 + barcode + template length as the key
+    counts_loc_umi = {}
+    out_counts_loc_umi = open(infile + "." + chromosome + ".loc_umi_count", "w")
     c = 0    
     # Unique read IDs: read5 + barcode + template length
     r1fwd_ids = {}
@@ -88,78 +86,67 @@ def mark_duplicates(infile, chromosome):
             print >>sys.stderr, "read_info: Barcode: " + read_bc
             print >>sys.stderr, "read_info: Read: " + str(read)        
         if not read.is_reverse and read.is_read1:
-            read_id = str(read5) + read_bc + str(read.template_length)
-            if count_loc_flag == True:
-                locus_id = str(read5) + "," + str(read.template_length)
-                if locus_id in counts_loc:
-                    counts_loc[locus_id] += 1
-                else:
-                    counts_loc[locus_id] = 1
-            # read_id = (read5, read_bc, read.template_length)            
-            if DEBUG:
-                print >>sys.stderr, read_id + "\t" + str(read)
-            if read_id in r1fwd_ids:
-                if DEBUG:
-                    print >>sys.stderr, "Found a duplicate (r1fwd): " + str(read)
-                # r1fwd_dup.append(read_n)
-                r1fwd_dup[read_n] = 0
+            read_id = str(read5) + "," + read_bc + "," + str(read.template_length) + ",r1"
+            locus_id = str(read5) + "," + str(read.template_length) + ",r1"
+            if locus_id in counts_loc:
+                counts_loc[locus_id] += 1
             else:
-                # r1fwd_ids.append(read_id)
-                r1fwd_ids[read_n] = 0
+                counts_loc[locus_id] = 1
+            if read_id in counts_loc_umi:
+                counts_loc_umi[read_id] += 1
+            else:
+                counts_loc_umi[read_id] = 1
+            # if DEBUG:
+            #     print >>sys.stderr, read_id + "\t" + str(read)
+            # if read_id in r1fwd_ids:
+            #     if DEBUG:
+            #         print >>sys.stderr, "Found a duplicate (r1fwd): " + str(read)
+            #     r1fwd_dup[read_n] = 'x'
+            # else:
+            #     r1fwd_ids[read_id] = 0
         elif not read.is_reverse and read.is_read2:
             # for a read that maps to the reverse strand, the read.template_length is still positive (not like those in the
             # bam file)
-            # read_id = str(read5) + read_bc + str(-read.template_length)
-            # read_id = str(read5) + read_bc + str(read.template_length)
-            # read_id = (read5, read_bc, read.template_length)
-            read_id = str(read5) + read_bc + str(read.template_length)
-            if count_loc_flag == True:
-                locus_id = str(read5) + "," + str(read.template_length)
-                if locus_id in counts_loc:
-                    counts_loc[locus_id] +=1
-                else:
-                    counts_loc[locus_id] = 1
-            if DEBUG:
-                print >>sys.stderr, read_id + "\t" + str(read)
-            if read_id in r2fwd_ids:
-                if DEBUG:
-                    print >>sys.stderr, read_n, "Found a duplicate (r2fwd)" + str(read)
-                # r2fwd_dup.append(read_n)
-                r2fwd_dup[read_n] = 0
+            read_id = str(read5) + "," + read_bc + "," + str(read.template_length) + ",r2"
+            locus_id = str(read5) + "," + str(read.template_length) + ",r2"
+            if locus_id in counts_loc:
+                counts_loc[locus_id] +=1
             else:
-                # r2fwd_ids.append(read_id)
-                r2fwd_ids[read_id] = 0
+                counts_loc[locus_id] = 1
+            if read_id in counts_loc_umi:
+                counts_loc_umi[read_id] += 1
+            else:
+                counts_loc_umi[read_id] = 1
+            # if DEBUG:
+            #     print >>sys.stderr, read_id + "\t" + str(read)
+            # if read_id in r2fwd_ids:
+            #     if DEBUG:
+            #         print >>sys.stderr, read_n, "Found a duplicate (r2fwd)" + str(read)
+            #     r2fwd_dup[read_n] = 'x'
+            # else:
+            #     r2fwd_ids[read_id] = 0
     bam.close()
-    # print >>sys.stderr, r1fwd_ids
-    # print >>sys.stderr, r1fwd_dup
-    # print >>sys.stderr, r2fwd_ids    
-    
-    # The 2nd pass:
-    bam = ps.AlignmentFile(infile, "rb")
-    for read in bam.fetch(reference=chromosome):
-        read_n = read.query_name
-        if read_n in r1fwd_dup or read_n in r2fwd_dup:
-            # Add 0x400 flags for PCR duplicates
-            read.flag = read.flag | 0x400
-        out.write(read)
-    bam.close()
-    out.close()
-    if count_loc_flag:
-        for locus_id in counts_loc:
-            print >>out_counts_loc, chromosome + "\t" + locus_id + "\t" + str(counts_loc[locus_id])
+    counts_loc_umi_cutoff = 2
+    for i in counts_loc:
+        print >> out_counts_loc, i + "\t" + str(counts_loc[i])
+    for i in counts_loc_umi:
+        if counts_loc_umi[i] >= counts_loc_umi_cutoff:
+            print >>out_counts_loc_umi, i + "\t" + str(counts_loc_umi[i])
+    out_counts_loc.close()
+    out_counts_loc_umi.close()
 
-def mark_duplicates_worker(chromosome):
-    mark_duplicates(infile, chromosome)
+def find_loci_with_duplicates_worker(chromosome):
+    find_loci_with_duplicates(infile, chromosome)
     
 if __name__ == "__main__":
     # mark_duplicates(bam, processes=processes)
     # mark_duplicates_helper(infile, processes=processes)
     bam_tmp = ps.AlignmentFile(infile, "rb")
     refs = bam_tmp.references
-    f = lambda x: mark_duplicates(infile, x)
     p = Pool(processes)
     # Goddamned Pool does not accept lambda functions!
-    p.map(mark_duplicates_worker, refs)
+    p.map(find_loci_with_duplicates_worker, refs)
+    # find_loci_with_duplicates(infile, "chr1")
     # mark_duplicates_worker("chr10")
     print("--- %s seconds ---" % (time.time() - start_time))
     
