@@ -10,22 +10,33 @@ library(ggplot2)
 args <- commandArgs(TRUE)
 fn <- args[1]
 output <- paste(fn, ".pdf", sep="")
-if(length(args)==3) {
-    bg.start <- as.numeric(args[2])
-    bg.end <- as.numeric(args[3])
+bg.start <- -Inf
+bg.end <- Inf
+## Total number of reads
+total <- 1
+if(length(args) == 2) {
+    total <- as.numeric(args[2])
+}
+if(length(args)==4) {
+    total <- as.numeric(args[2])
+    bg.start <- as.numeric(args[3])
+    bg.end <- as.numeric(args[4])
     sprintf("Using [%d, %d] except for the 9th position as the background!", bg.start, bg.end)
 } else {
-    bg.start <- -Inf
-    bg.end <- Inf
+    ## bg.start <- -Inf
+    ## bg.end <- Inf
     sprintf("Using all signals except for the 9th position as the background", bg.start, bg.end)
 }
+
+sprintf("Using %d reads to normalize", total)
+
 # output <- args[2]
 ## fn <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/Hi5.nodavirus.unox.pps"
 ## output <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/test.pdf"
-
 a <- read.table(fn)
+## total <- 15093295
 
-pps_plot <- function(a) {
+pps_plot <- function(a, total=1) {
     if( ncol(a) == 2) {
         idx <- a$V1 >= 0
         pos <- a[idx, ]
@@ -65,10 +76,21 @@ pps_plot <- function(a) {
         print(p1)
         print(p2)
         print(p3)
+        ## Normalized value
+        if(total!=1) {
+            pn1 <- ggplot(a, aes(x=V1, y=V2 / (total * total)*1e3 )) + xlab("# nucleotide overlap (x=9: 10-nt overlap)") + ylab("pairs per thousand pairs") + ggtitle(my.title) + geom_vline(xintercept = 0, color="gray") + theme(aspect.ratio=1) + geom_bar(stat="identity")
+            pn2 <- ggplot(a, aes(x=V1, y=V2 / (total * total)*1e6 )) + xlab("# nucleotide overlap (x=9: 10-nt overlap)") + ylab("pairs per million pairs") + ggtitle(my.title) + geom_vline(xintercept = 0, color="gray") + theme(aspect.ratio=1) + geom_bar(stat="identity")
+            pn3 <- ggplot(a, aes(x=V1, y=V2 / (total * total)*1e9 )) + xlab("# nucleotide overlap (x=9: 10-nt overlap)") + ylab("pairs per billion pairs") + ggtitle(my.title) + geom_vline(xintercept = 0, color="gray") + theme(aspect.ratio=1) + geom_bar(stat="identity")
+            pn4 <- ggplot(a, aes(x=V1, y=V2 / (total * total)*1e12 )) + xlab("# nucleotide overlap (x=9: 10-nt overlap)") + ylab("pairs per trillion pairs") + ggtitle(my.title) + geom_vline(xintercept = 0, color="gray") + theme(aspect.ratio=1) + geom_bar(stat="identity")
+            print(pn1)
+            print(pn2)
+            print(pn3)
+            print(pn4)
+        }
         dev.off()
     } else {
         write("Wrong format: a two-column table from pps_simple.py is expected", stderr())
     }
 }
 
-pps_plot(a)
+pps_plot(a, total=total)
