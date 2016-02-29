@@ -13,8 +13,8 @@ chrominfo=$1
 bed2=$2
 watson=${bed2}.Watson
 crick=${bed2}.Crick
-cat ${bed2} | grep "+" | awk -v OFS="\t" '{ print $1, $2, $2+1, $4, $5, $6, $7 }' > ${watson}
-cat ${bed2} | grep "-" | awk -v OFS="\t" '{ print $1, $3-1, $3, $4, $5, $6, $7 }' > ${crick}
+cat ${bed2} | awk '{ if($6=="+") { print } }' | awk -v OFS="\t" '{ print $1, $2, $2+1, $4, $5, $6, $7 }' > ${watson}
+cat ${bed2} | awk '{ if($6=="-") { print } }' | awk -v OFS="\t" '{ print $1, $3-1, $3, $4, $5, $6, $7 }' > ${crick}
 # There are 16 'chromosomes' in fly genome
 gppc_internal.py -a ${watson} -b ${watson} -c ${chrominfo} -p 16 2>${bed2}.phasing.log >${bed2}.Waston.phasing_hist
 gppc_internal.py -a ${crick} -b ${crick} -c ${chrominfo} -p 16 2>${bed2}.phasing.log >${bed2}.Crick.phasing_hist
