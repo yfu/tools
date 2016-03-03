@@ -36,11 +36,16 @@ if (ncol(a) == 3) {
     ## 19	344	+
     ## 20	231	+
     ## 21	210	+
+
     write("The table has three columns. I will use the strand information", stderr())
-    idx.plus <- a$V3 == "+"
-    idx.minus <- a$V3 == "-"
-    plus <- a[idx.plus, ]
-    minus <- a[idx.minus, ]
+    ## idx.plus <- a$V3 == "+"
+    ## idx.minus <- a$V3 == "-"
+    ## plus <- a[idx.plus, ]
+    ## minus <- a[idx.minus, ]
+    plus  <- a[, c(1, 2)]
+    colnames(plus) <- c("V1", "V2")
+    minus <- a[, c(1, 3)]
+    colnames(minus) <- c("V1", "V2")
     my.total.plus  <- sum(plus$V2)
     my.total.minus <- sum(minus$V2)
     my.total <- my.total.plus + my.total.minus
@@ -51,13 +56,20 @@ if (ncol(a) == 3) {
     my.mean.minus <- round( mean( rep(minus$V1, times=minus$V2) ), digits=2)
     my.mean <- mean( rep(a$V1, times=a$V2) )
     
-    a[idx.minus, ]$V2 <- -a[idx.minus, ]$V2
+    # a[idx.minus, ]$V2 <- -a[idx.minus, ]$V2
 
+    plus$V3 <- "+"
+    minus$V3 <- "-"
+    minus$V2 <- -minus$V2
+
+    b <- rbind(plus, minus)
+    
     pdf(output)
+
     my.title <- paste("Read length distribution", "\nTotal: ", my.total, "(", my.total.plus, "+", my.total.minus, ")", " Median: ", my.median, " Mean: ", my.mean, sep="", "\n", "Median(+): ", my.median.plus, " Mean(+): ", my.mean.plus, " Median(-): ", my.median.minus, " Mean(-): ", my.mean.minus)
 
-    minus$V2 <- -minus$V2
     p <- ggplot() + geom_bar(data=minus, aes(x=V1, y=V2, group=V3, fill=V3), stat="identity", position=) + xlab("Read length") + ylab("Number of reads") + ggtitle(my.title) + geom_bar(data=plus, aes(x=V1, y=V2, group=V3, fill=V3), stat="identity", position=)
+    
     print(p)
     dev.off()
 }
