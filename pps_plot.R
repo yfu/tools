@@ -3,17 +3,20 @@
 ## Read as input the table from pps_simple.py and output a PDF file
 ## Keep in mind that in the input, i=9 means 10nt overlap
 ## Usage: pps_plot.R test.bed2.pp_hist 0 29 (use signals at [0, 29] except for the 9th position as the background)
+## Usage: pps_plot.R test.bed2.pp_hist 1000000 (use everything except for the 9th position as the background and tell it that there is 1 million reads in total)
 ## Usage: pps_plot.R test.bed2.pp_hist (use everything except for the 9th position as the background
 
 library(ggplot2)
 
 args <- commandArgs(TRUE)
+args <- c("/data/fuy2/gfp_pirna/results/2016-02-24-confirming-dm3-dm6-and-plotting-wiggle/updown2k/phasing/test/test.Watson.phasing_hist", "10000000", "0", "29")
 fn <- args[1]
 output <- paste(fn, ".pdf", sep="")
 bg.start <- -Inf
 bg.end <- Inf
 ## Total number of reads
 total <- 1
+
 if(length(args) == 2) {
     total <- as.numeric(args[2])
 }
@@ -30,6 +33,29 @@ if(length(args)==4) {
 
 sprintf("Using %d reads to normalize", total)
 
+add.zscore.col <- function(my.df) {
+    ## Add a column of z-scores to the data frame
+    ## my.df$zscore <- 0
+    for (i in 1:nrow(my.df)) {
+        bg <- my.df[, 1:2]
+        idx <- bg[, 1] >= bg.start & bg[, 1] <= bg.end
+        ## dont forget the remove itself
+        idx[i] <- FALSE
+        bg <- bg[idx, ]
+        ## If the position in interest happens to be between bg.start and bg.end
+        ## we need to remove that from the bg
+        cur.score <- my.df[i, 2]
+        if (cur.score >= bg.start & cur.score <= bg.end) {
+            bg <- bg[-i, ]
+        }
+        my.mean <- mean(bg[, 2])
+        my.sd <- sd(bg[, 2])
+        my.df$zscore[i] <- (cur.score - my.mean) / my.sd
+    }
+    my.df
+}
+
+
 # output <- args[2]
 ## fn <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/Hi5.nodavirus.unox.pps"
 ## output <- "/data/fuy2/cl/results/2015-03-09/bowtie_mapping/test.pdf"
@@ -38,6 +64,9 @@ a <- read.table(fn)
 
 pps_plot <- function(a, total=1) {
     if( ncol(a) == 2) {
+        a <- add.zscore.col(a)
+        print("The third column is the zscore")
+        print(a)
         idx <- a$V1 >= 0
         pos <- a[idx, ]
         ## pos$V1 = pos$V1 + 1
@@ -73,9 +102,12 @@ pps_plot <- function(a, total=1) {
         p2 <- p + geom_bar(stat="identity", aes(fill=color, color=color)) + scale_fill_manual(values=c("black", "red", "green", "blue")) + scale_color_manual(values=c("black", "red", "green", "blue"))
         ## p <- p + geom_point(aes(x=V1, y=V2), data=neg) + geom_line(aes(x=V1, y=V2))
         p3 <- p2 + scale_y_log10()
+        q <- ggplot(a, aes(x=V1, y=zscore)) + xlab("# nucleotide overlap (x=9: 10-nt overlap)") + ylab("z-score given the background set by the user") + ggtitle(my.title) + geom_bar(stat="identity") + geom_vline(xintercept = 0, color="gray") + theme(aspect.ratio=1)
         print(p1)
         print(p2)
         print(p3)
+        print(q)
+        # print(q + scale_y_log10())
         ## Normalized value
         if(total!=1) {
             pn1 <- ggplot(a, aes(x=V1, y=V2 / (total * total)*1e3 )) + xlab("# nucleotide overlap (x=9: 10-nt overlap)") + ylab("pairs per thousand pairs") + ggtitle(my.title) + geom_vline(xintercept = 0, color="gray") + theme(aspect.ratio=1) + geom_bar(stat="identity")
