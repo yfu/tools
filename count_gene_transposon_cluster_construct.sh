@@ -23,8 +23,8 @@ if [ -f ${commands} ]; then
     rm ${commands}
 fi
 for i in gene transposon cluster threeprimeutr; do
-    echo "cat ${bed} | bedtools intersect -split -s -a - -b ${t[${i}]} -wa -wb | bedtools groupby -i - -g 1,2,3,4,5,6 -c 16 -o collapse | awk '{ split(\$7, a, \",\"); l=length(a); for(i in a) { c[ a[i] ] += 1/l; } } END{ for(i in c) { print i \"\t\" c[i] } }' > ${prefix}.${i}.S.raw_count" >> ${commands}
-    echo "cat ${bed} | bedtools intersect -split -S -a - -b ${t[${i}]} -wa -wb | bedtools groupby -i - -g 1,2,3,4,5,6 -c 16 -o collapse | awk '{ split(\$7, a, \",\"); l=length(a); for(i in a) { c[ a[i] ] += 1/l; } } END{ for(i in c) { print i \"\t\" c[i] } }' > ${prefix}.${i}.AS.raw_count" >> ${commands}
+    echo "cat ${bed} | bedtools intersect -split -f 0.99 -s -a - -b ${t[${i}]} -wa -wb | bedtools groupby -i - -g 1,2,3,4,5,6 -c 16 -o collapse | awk '{ split(\$7, a, \",\"); l=length(a); for(i in a) { c[ a[i] ] += 1/l; } } END{ for(i in c) { print i \"\t\" c[i] } }' > ${prefix}.${i}.S.raw_count" >> ${commands}
+    echo "cat ${bed} | bedtools intersect -split -f 0.99 -S -a - -b ${t[${i}]} -wa -wb | bedtools groupby -i - -g 1,2,3,4,5,6 -c 16 -o collapse | awk '{ split(\$7, a, \",\"); l=length(a); for(i in a) { c[ a[i] ] += 1/l; } } END{ for(i in c) { print i \"\t\" c[i] } }' > ${prefix}.${i}.AS.raw_count" >> ${commands}
 done
 
 echo "cat ${bed} | awk '{ if(\$6==\"+\") {print} }' | awk '{ if(\$1==\"GSV6\" || \$1==\"nos-gal4-vp16\" || \$1==\"UASp-EGFP\") {s[\$1]+=1} } END{ for(i in s) { print i \"\t\" s[i] } }' > ${prefix}.construct.Watson.raw_count && awk -v nf=$nf -v OFS=\"\t\" '{ print \$1, \$2, \$2*nf }' ${prefix}.construct.Watson.raw_count > ${prefix}.construct.Watson.count" >> ${commands}
