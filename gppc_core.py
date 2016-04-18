@@ -56,14 +56,22 @@ def bed2_reader(fn, s):
         counter += 1
         if (counter % BLOCK == 0):
             print >>sys.stderr, "Processed %d lines" % counter
-        chrom, start, end, copy, ntm, strand, seq = line.split()
+        cols = line.split()
+        chrom = cols[0]
+        start = cols[1]
+        end = cols[2]
+        copy = cols[3]
+        ntm = cols[4]
+        strand = cols[5]
+        # seq is optional.
+        if len(cols) > 6:
+            seq = cols[6]
         start = int(start)
         end = int(end)
         copy = float(copy)
         ntm = float(ntm)
         cur_sig = copy/ntm
-        s[chrom][start, 0] += cur_sig
-    
+        s[chrom][start, 0] += cur_sig    
 
 # def d1(s, rang, flag):
 #     '''5' to 5' distance or 3' to 3' distance:

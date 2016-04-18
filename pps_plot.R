@@ -9,7 +9,7 @@
 library(ggplot2)
 
 args <- commandArgs(TRUE)
-args <- c("/data/fuy2/gfp_pirna/results/2016-02-24-confirming-dm3-dm6-and-plotting-wiggle/updown2k/phasing/test/test.Watson.phasing_hist", "10000000", "0", "29")
+## args <- c("/data/fuy2/gfp_pirna/results/2016-02-24-confirming-dm3-dm6-and-plotting-wiggle/updown2k/phasing/test/test.Watson.phasing_hist", "10000000", "0", "29")
 fn <- args[1]
 output <- paste(fn, ".pdf", sep="")
 bg.start <- -Inf
