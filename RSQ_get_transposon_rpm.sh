@@ -7,8 +7,8 @@ prefix=${sam%.sam}
 prefix=${prefix%.bam}
 cpu=8
 genome=mm10
-
-samtools view -b -F 0x100 ${sam} | bedtools bamtobed -bed12 -i - | bedtools bed12tobed6 -i /dev/stdin | awk -v OFS="\t" '{ l=length($4); r=substr($4, l, 1); if(r==1) { $6=$6=="+"?"-":"+"; print } else { print } }' | sort -k1,1 -k2,2n --parallel=${cpu} > ${prefix}.bed6
+## convert bam (sam) to bed6 and put r1 to the sense strand
+samtools view -b -F 0x100 ${sam} | bedtools bamtobed -bed12 -i - | bedtools bed12tobed6 -i /dev/stdin | awk -v OFS="\t" '{ l=length($4); r=substr($4, l, 1); if(r==1) { $6 = $6=="+"?"-":"+"; print } else { print } }' | sort -k1,1 -k2,2n --parallel=${cpu} > ${prefix}.bed6
 
 cmd=${prefix}.transposon_intersection.cmd
 cmd2=${prefix}.transposon_intersection.cmd2
@@ -25,7 +25,7 @@ if [[ ${genome} == "mm10" ]]; then
 	# echo "bedtools intersect -sorted -s -a ${prefix}.bed6 -b ~/data/shared/mm10/UCSC.rmsk.${i}.sorted.bed -wa -wb -f 0.9 | bedtools groupby -i - -g 10 -c 4 -o count_distinct > ${prefix}.${i}.count" >> ${cmd}
 	echo "bedtools intersect -sorted -s -a ${prefix}.bed6 -b ~/data/shared/mm10/UCSC.rmsk.${i}.sorted.bed -wa -wb -f 0.9 | sort -k1,1 -k2,2n | bedtools groupby -i - -g 7,8,9,10 -c 4 -o count_distinct > ${prefix}.${i}.count " >> ${cmd}
 	echo "cat ${prefix}.${i}.count | awk '{ a[\$4]+=\$5 } END{ for(i in a) { print i \"\t\" a[i] } }' > ${prefix}.${i}.count.by_transposon" >> ${cmd2}
-	echo "cat ${prefix}.${i}.count | awk '{ a[\$4]+=\$5 } END{ for(i in a) { print i \"\t\" a[i] } }' > ${prefix}.${i}.count.by_transposon" >> ${cmd2}
+	# echo "cat ${prefix}.${i}.count | awk '{ a[\$4]+=\$5 } END{ for(i in a) { print i \"\t\" a[i] } }' > ${prefix}.${i}.count.by_transposon" >> ${cmd2}
 	echo "awk '{ s+=\$2 } END{ print s }' ${prefix}.${i}.count.by_transposon > ${prefix}.${i}.count.by_transposon_family" >> ${cmd3}
     done
 
