@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Given a bam file and a GTF file, this script sorts the bam by name then run it using htseq
-if [[ "$#" != 2 ]]; then
+if [[ "$#" != 3 ]]; then
     echo "Usage: for dUTP RNA-seq libraries: htseq_bam_to_count.sh your.gtf your.unsorted.bam"
     echo "Usage: for other cases, specify the orientation you want: htseq_bam_to_count.sh your.gtf your.unsorted.bam [yes|reverse]"    
     exit 0
