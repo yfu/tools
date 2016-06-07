@@ -10,7 +10,7 @@ fi
 FEATURE=gene_id
 HTSEQ_MODE=intersection-strict
 GTF=$1
-BAM=$(readlink -e $2)
+BAM=$2
 
 if [[ -z "$3" ]]; then
     htseq_strand_option=reverse
