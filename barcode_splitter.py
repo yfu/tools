@@ -9,7 +9,19 @@
 import sys, os, re
 import optparse # For compatibility with Python 2.6 and lower
 from optparse import OptionParser
+import gzip
+from struct import unpack
 
+
+def is_gzipped(filename):
+    # 1F 8B 08 00 / gz magic number
+    magic = ('\x1f', '\x8b', '\x08')
+    with open(filename, 'rb') as handle:
+        s = unpack('ccc', handle.read(3))
+        print s
+    return s == magic
+
+    
 def calc_str_dist(barcode, s):
     """Calculate the distance between two strings of the same or different lengths:
     In either case, use the first few letters to determine the distance. For example,
@@ -77,6 +89,11 @@ Author: Yu Fu (yfu at yfu dot me)"""
         # a.fastq would be split into a.id1.fastq, a.id2.fastq....
         barcodes_fh[k] = open(p  + fn_prefix + "_" + barcodes_names[k] + s, "w")
 
+    if is_gzipped(fastq_fn):
+        print "gzipped"
+    else:
+        print "regular"
+    sys.exit(0)
     with open(fastq_fn) as fastq_in:
         while True:
             line1 = fastq_in.readline()

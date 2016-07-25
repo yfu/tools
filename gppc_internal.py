@@ -64,6 +64,9 @@ if __name__ == "__main__":
     print >>sys.stderr, "Chromosome lengths have been loaded."
 
     # Read the bed2 file
+    # Here we only care about the 5' end
+    # If you would like to process 3' end, you can shrink your bed2 file so
+    # that each line represents a 3' end
     bed2_reader(args['a'], sa)
     bed2_reader(args['b'], sb)
     print >>sys.stderr, "Signals have been loaded."
