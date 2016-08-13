@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# Based on gppc_pp.sh
+# This script calculates A.watson vs B.Crick and also B.Watson and A.Crick
+# This is for cases when A and B are different
+# If A and B are the same, i.e. they come from the same library, two results are the same
+# Just a wrapper around gppc_internal.py
+# Process bed2 files 
+# Separate a given bed2 file, such that
+# a. the first bed2 file contains signals on the Watson strand and only records the 5' position of reads
+# b. the second bed2 file contains signals on the Crick strand and only records the 5' position of reads
+# Then this script runs gppc_internal.py to get the Ping-Pong score
+if [[ "$#" -ne 2 ]]; then
+    echo "Usage: gppc_pp.sh XX.ChromInfo.txt your.bed2"
+    exit 0
+fi
+
+chrominfo=$1
+A=$2
+B=$3
+Awatson=${bed2}.Watson
+Acrick=
+Bcrick=${bed2}.Crick
+
+cat ${bed2} | awk -v OFS="\t" '{ if($6=="+") { print } }' | awk -v OFS="\t" '{ print $1, $2, $2+1, $4, $5, $6, $7 }' > ${watson}
+# cat ${bed2} | grep "+" | awk -v OFS="\t" '{ print $1, $2, $2+1, $4, $5, $6, $7 }' > ${watson}
+cat ${bed2} | awk -v OFS="\t" '{ if($6=="-") { print } }' | awk -v OFS="\t" '{ print $1, $3-1, $3, $4, $5, $6, $7 }' > ${crick}
+# There are 16 'chromosomes' in fly genome
+gppc_internal.py -a ${watson} -b ${crick} -c ${chrominfo} -p 16 2>${bed2}.pp.log >${bed2}.pp_hist
+gppc_internal.py -a ${watson} -b ${crick} -c ${chrominfo} -p 16 2>${bed2}.pp.log >${bed2}.pp_hist
