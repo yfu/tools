@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 # usage: python assign_pirna_to_genes.py SRAtoTranscripts.all.ox.bed2 > SRAtoTranscripts.all.ox.count
+# Given a bed2 file (small RNAs mapped to transcriptome), this script outputs the number of
+# reads each Trinity gene has (unique reads and nonunique reads)
 
 import sys
 import re
