@@ -88,9 +88,11 @@ def delta(w1, w2):
     return ret
 
     
-max_iter = 50
+max_iter = 100
 n_iter = 0
-epsilon = 0.001
+# epsilon = 0.001
+# To make it finish earlier
+epsilon = 0.05
 
 while(True):
     n_iter += 1

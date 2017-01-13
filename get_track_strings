@@ -17,7 +17,7 @@ if [[ -z "$vis" ]]; then
     vis=2
 fi
 p=$(readlink -e $p)
-rel=${p#/data/www/zlab-trackhub/}
+rel=${p#/nfs/www@bib7/zlab-trackhub/}
 rel=$(dirname ${rel})
 # echo ${rel}
 fn=$(basename ${p})
@@ -41,8 +41,3 @@ else
     # Signals without strand
     echo "track type=${type} name=\"${fn}\" bigDataUrl=http://${url_root}/${rel}/${fn} color=0,0,255 visibility=${vis} priority=50 ${opts}"
 fi
-
-
-
-
-

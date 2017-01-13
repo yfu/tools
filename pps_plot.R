@@ -19,16 +19,15 @@ total <- 1
 
 if(length(args) == 2) {
     total <- as.numeric(args[2])
-}
-if(length(args)==4) {
+} else if(length(args) == 4) {
     total <- as.numeric(args[2])
     bg.start <- as.numeric(args[3])
     bg.end <- as.numeric(args[4])
-    sprintf("Using [%d, %d] except for the 9th position as the background!", bg.start, bg.end)
-} else {
-    ## bg.start <- -Inf
-    ## bg.end <- Inf
-    sprintf("Using all signals except for the 9th position as the background", bg.start, bg.end)
+    sprintf("Using [%d, %d] except for the 9th position as the background!\nUse %d as the total number of reads", bg.start, bg.end, total)
+} else if(length(args) == 3){
+    bg.start <- as.numeric(args[2])
+    bg.end <- as.numeric(args[3])
+    sprintf("Using all signals except for the 9th position as the background!", bg.start, bg.end)
 }
 
 sprintf("Using %d reads to normalize", total)

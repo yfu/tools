@@ -1,0 +1,187 @@
+#!/usr/bin/env python
+
+# Get bed files for exons, genes, 3UTRs and 5UTRs.
+# Note that the results bed file might cross chromosome boundaries...
+# If this ever happens, clean the bed file using awk and chrominfo file
+# Specially, it calculates the 3rd quantile of 3UTR length and infer those genes without
+# annotated 3UTRs. It also extends 3UTRs shorted than the 3rd quantile to the 3rd quantile
+# Notice that the upstream1000, upstream2000 and upstream5000 files
+# may cross chromosome boundaries
+
+import sys
+import re
+import gffutils
+import numpy as np
+from pyfaidx import Fasta
+from Bio.Seq import Seq
+from Bio.Alphabet import generic_dna
+DEBUG = False
+
+
+# fn = "small.gff"
+# fn = "hi5_v0.8.2.run6.gene.gff"
+# fasta_fn = "hi5_v0.8.2.fasta"
+# fn_chrominfo = sys.argv[1]
+fn_gff = sys.argv[1]
+output = sys.argv[2]
+
+output_exon_fn = output + ".exon.bed"
+output_gene_fn = output + ".gene.bed"
+output_3utr_fn = output + ".3UTR.ext.bed"
+output_5utr_fn = output + ".5UTR.ext.bed"
+comment = "#" + "\t".join(["chr", "start", "end",
+                           "GI", "local_id", "strand"])
+output_exon = open(output_exon_fn, "w")
+output_gene = open(output_gene_fn, "w")
+output_3utr = open(output_3utr_fn, "w")
+output_5utr = open(output_5utr_fn, "w")
+print >>output_exon, comment
+print >>output_gene, comment
+print >>output_3utr, comment
+print >>output_5utr, comment
+
+db = gffutils.create_db(fn_gff, dbfn=fn_gff + ".db",
+                        force=True, keep_order=True,
+                        merge_strategy='merge',
+                        sort_attribute_values=True)
+
+def extract_geneid(g):
+    ## Given a Gene object, it returns the local_id (e.g. gene1)
+    ## and gene ID (e.g. 11112233)
+    local_id = gene["ID"][0]
+    tmp = gene["Dbxref"]
+    tmp = ",".join(tmp)
+    m = re.search("GeneID:([^;,]+)", tmp)
+    if m is None:
+        print >>sys.stderr, "The gene record does not have GeneID attributes!"
+        print >>sys.stderr, gene
+        geneid = "NA"
+    else:
+        geneid = m.group(1)
+        # print geneid
+    return [local_id, geneid]
+
+# for mrna in db.features_of_type("mRNA", order_by="start"):
+for mrna in db.features_of_type("mRNA"):
+    for exon in db.children(mrna, featuretype="exon", order_by="start"):
+        chrom = exon.seqid
+        start = exon.start - 1
+        end = exon.end
+        strand = exon.strand
+        gene = list(db.parents(exon, featuretype="gene"))[0]
+        local_id, geneid = extract_geneid(gene)
+        print >>output_exon, "\t".join([chrom, str(start), str(end),
+                                        geneid, local_id, strand])
+
+utr3_lengths = []
+for utr3 in db.features_of_type("three_prime_UTR"):
+    utr3_lengths.append(utr3.end - utr3.start + 1)
+# min length of 3 UTR. If 3' UTR is shorter than this, extend it to this length    
+ml = np.percentile(utr3_lengths, 75)
+print >> output_3utr, "#The 3rd quantile of 3' UTR lengths: %f" % (ml)
+for mrna in db.features_of_type("mRNA", order_by="start"):
+    utr3s = list(db.children(mrna, featuretype="three_prime_UTR",
+                             order_by="start"))
+    gene = list(db.parents(mrna, featuretype="gene"))[0]
+    local_id, geneid = extract_geneid(gene)    
+    if (len(utr3s) == 0):
+        if DEBUG:
+            print >>output_3utr, "# " + str(gene)
+        if gene.strand == "+":
+            start = gene.end
+            end = int(start + ml)
+            print >> output_3utr, "\t".join([gene.seqid, str(start),
+                                             str(end),
+                                             geneid, local_id,
+                                             gene.strand,
+                                             # "#ext on plus strand"
+                                             ])
+        else:
+            end = gene.start
+            start = int(gene.start - ml)
+            print >> output_3utr, "\t".join([gene.seqid,
+                                             str(start),
+                                             str(end),
+                                             geneid, local_id,
+                                             gene.strand,
+                                             # "#ext on minus strand"
+                                             ])
+    else:
+        for utr3 in utr3s:
+            if DEBUG:
+                print >>output_3utr, "# " + str(utr3)
+            start = utr3.start - 1
+            end = utr3.end
+            strand = utr3.strand
+            if (end - start < ml):
+                if strand == "+":
+                    end = int(start + ml)
+                else:
+                    start = int(end - ml)
+            print >>output_3utr, "\t".join([utr3.seqid, str(start),
+                                            str(end), geneid, local_id,
+                                            utr3.strand, 
+                                            # "#based_on_existing_annotation"
+                                            ])
+
+# 5UTRs
+utr5_lengths = []
+for utr5 in db.features_of_type("five_prime_UTR"):
+    utr5_lengths.append(utr5.end - utr5.start + 1)
+# min length of 5 UTR. If 5' UTR is shorter than this, extend it to this length    
+ml = np.percentile(utr5_lengths, 75)
+print >>output_5utr,  "#The 3rd quantile of 5' UTR lengths: %f" % (ml)
+for mrna in db.features_of_type("mRNA", order_by="start"):
+    utr5s = list(db.children(mrna, featuretype="five_prime_UTR",
+                             order_by="start"))
+    gene = list(db.parents(mrna, featuretype="gene"))[0]
+    local_id, geneid = extract_geneid(gene)    
+    if (len(utr5s) == 0):
+        if DEBUG:
+            print >>output_5utr, "# " + str(gene)
+        if gene.strand == "+":
+            end = gene.start - 1
+            start = int(end - ml)
+            print >> output_5utr, "\t".join([gene.seqid, str(start),
+                                             str(end),
+                                             geneid, local_id,
+                                             gene.strand,
+                                             # "#ext on plus strand",
+                                             ])
+        else:
+            start = gene.end
+            end = int(start + ml)
+            print >> output_5utr, "\t".join([gene.seqid,
+                                             str(start),
+                                             str(end),
+                                             geneid, local_id,
+                                             gene.strand,
+                                             # "#ext on minus strand",
+                                             ])
+    else:
+        for utr5 in utr5s:
+            if DEBUG:
+                print >>output_5utr, "# " + str(utr5)
+            start = utr5.start - 1
+            end = utr5.end
+            strand = utr5.strand
+            if (end - start < ml):
+                if strand == "+":
+                    start = int(end - ml)
+                else:
+                    end = int(start + ml)
+            print >>output_5utr, "\t".join([utr5.seqid, str(start),
+                                            str(end), geneid, local_id,
+                                            utr5.strand,
+#                                            # "#based_on_existing_annotation",
+                                            ])
+            
+for gene in db.all_features(featuretype="gene"):
+    local_id, geneid = extract_geneid(gene)
+    start = gene.start - 1
+    end = gene.end
+    strand = gene.strand
+    seqid = gene.seqid
+    print >>output_gene, "\t".join([seqid, str(start),
+                                    str(end), geneid, local_id,
+                                    strand])
