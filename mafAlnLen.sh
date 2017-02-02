@@ -7,4 +7,4 @@ if [[ "$#" -ne 1 ]]; then
 fi
 
 sname=$1
-awk -v FS=" " -v OFS=" " -v sname=dmel '{ split($2, a, "."); if(a[1]==sname) { s+=$4} } END{ print s }' /dev/stdin
+awk -v FS=" " -v OFS=" " -v sname=dmel 'BEGIN{ s=0 } { split($2, a, "."); if(a[1]==sname) { s+=$4; } } END{ print s }' /dev/stdin
