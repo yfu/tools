@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+
+BEDTOOLS=/usr/local/bin/bedtools
+
 if [[ "$#" < 1 ]]; then
     echo -e "Usage: \nfor dUTP RNA-seq where read1 is antisense\n\tRSQ_get_transposon_rpm.sh your.bam"
     echo -e "\tRSQ_get_transposon_rpm.sh your.bam reverse"
@@ -29,7 +32,7 @@ genome=mm10
 ## convert bam (sam) to bed6 and put r1 to the sense strand
 ## For each read, I only keep the best alignment result
 status_f=${prefix}.convert_to_bed6.ok
-samtools view -b -F 0x100 ${sam} | bedtools bamtobed -bed12 -i - | bedtools bed12tobed6 -i /dev/stdin | awk -v strand_to_reverse=${strand_to_reverse} -v OFS="\t" '{ l=length($4); r=substr($4, l, 1); if(r==strand_to_reverse) { $6 = $6=="+"?"-":"+"; print } else { print } }' | sort -k1,1 -k2,2n --parallel=${cpu} > ${prefix}.bed6
+samtools view -b -F 0x100 ${sam} | ${BEDTOOLS} bamtobed -bed12 -i - | ${BEDTOOLS} bed12tobed6 -i /dev/stdin | awk -v strand_to_reverse=${strand_to_reverse} -v OFS="\t" '{ l=length($4); r=substr($4, l, 1); if(r==strand_to_reverse) { $6 = $6=="+"?"-":"+"; print } else { print } }' | sort -k1,1 -k2,2n --parallel=${cpu} > ${prefix}.bed6
 
 cmd=${prefix}.transposon_intersection.cmd
 cmd2=${prefix}.transposon_intersection.cmd2
@@ -44,7 +47,7 @@ echo "" > ${cmd4}
 if [[ ${genome} == "mm10" ]]; then
     for i in DNA LINE LTR rRNA Satellite Simple_repeat SINE tRNA; do
 	# echo "bedtools intersect -sorted -s -a ${prefix}.bed6 -b ~/data/shared/mm10/UCSC.rmsk.${i}.sorted.bed -wa -wb -f 0.9 | bedtools groupby -i - -g 10 -c 4 -o count_distinct > ${prefix}.${i}.count" >> ${cmd}
-	echo "bedtools intersect -sorted -s -a ${prefix}.bed6 -b ~/data/shared/mm10/UCSC.rmsk.${i}.sorted.bed -wa -wb -f 0.9 | sort -k1,1 -k2,2n | bedtools groupby -i - -g 7,8,9,10 -c 4 -o count_distinct > ${prefix}.${i}.count " >> ${cmd}
+	echo "${BEDTOOLS} intersect -sorted -s -a ${prefix}.bed6 -b ~/data/shared/mm10/UCSC.rmsk.${i}.sorted.bed -wa -wb -f 0.9 | sort -k1,1 -k2,2n | ${BEDTOOLS} groupby -i - -g 7,8,9,10 -c 4 -o count_distinct > ${prefix}.${i}.count " >> ${cmd}
 	echo "cat ${prefix}.${i}.count | awk '{ a[\$4]+=\$5 } END{ for(i in a) { print i \"\t\" a[i] } }' > ${prefix}.${i}.count.by_transposon" >> ${cmd2}
 	# echo "cat ${prefix}.${i}.count | awk '{ a[\$4]+=\$5 } END{ for(i in a) { print i \"\t\" a[i] } }' > ${prefix}.${i}.count.by_transposon" >> ${cmd2}
 	echo "awk '{ s+=\$2 } END{ print s }' ${prefix}.${i}.count.by_transposon > ${prefix}.${i}.count.by_transposon_class" >> ${cmd3}

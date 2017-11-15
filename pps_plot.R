@@ -101,10 +101,18 @@ pps_plot <- function(a, total=1) {
         p2 <- p + geom_bar(stat="identity", aes(fill=color, color=color)) + scale_fill_manual(values=c("black", "red", "green", "blue")) + scale_color_manual(values=c("black", "red", "green", "blue"))
         ## p <- p + geom_point(aes(x=V1, y=V2), data=neg) + geom_line(aes(x=V1, y=V2))
         p3 <- p2 + scale_y_log10()
+        p4 <- p + theme_classic() + theme(aspect.ratio=1) + geom_line() # Make sure I have 1-to-1 aspect ratio and classic theme
+
+        ## Only plot the positive half
+        a.positive <- a[a$V1 >= 0, ]
+        print(a.positive)
+        p5 <- ggplot(a.positive, aes(x=V1, y=V2)) + xlab("# nucleotide overlap (x=9: 10-nt overlap)") + ylab("raw signal") + ggtitle(my.title) + theme_classic() + geom_vline(xintercept = 0, color="gray") + theme(aspect.ratio=1) + geom_line()
         q <- ggplot(a, aes(x=V1, y=zscore)) + xlab("# nucleotide overlap (x=9: 10-nt overlap)") + ylab("z-score given the background set by the user") + ggtitle(my.title) + geom_bar(stat="identity") + geom_vline(xintercept = 0, color="gray") + theme(aspect.ratio=1)
         print(p1)
         print(p2)
         print(p3)
+        print(p4)
+        print(p5)
         print(q)
         # print(q + scale_y_log10())
         ## Normalized value
