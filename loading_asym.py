@@ -8,7 +8,7 @@ import argparse
 def loading_asym(fp_watson, fp_crick, tp_watson, tp_crick):
     # Pseudocount to avoid dividing by 0
     pc = 0.1
-    print("# chrom\tthree_prime_pos_on_watson\tasym_score")
+    print("# chrom\tthree_prime_pos_on_watson\tasym_ratio")
     for chrom in tp_watson:
         for end in tp_watson[chrom]:
 
@@ -25,7 +25,7 @@ def loading_asym_rev(fp_watson, fp_crick, tp_watson, tp_crick):
     # If I traverse the crick strand, I should get the same results
     # Pseudocount to avoid dividing by 0
     pc = 0.1
-    print("# chrom\tthree_prime_pos_on_watson\tasym_score")
+    print("# chrom\tthree_prime_pos_on_watson\tasym_ratio")
     for chrom in tp_crick:
         for end in tp_crick[chrom]:
 
